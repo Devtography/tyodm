@@ -1,4 +1,4 @@
-type BaseType = 'bool' | 'int' | 'double' | 'string';
+type BasePropType = 'bool' | 'int' | 'double' | 'string';
 
 /**
  * Available field data types
@@ -21,24 +21,24 @@ type BaseType = 'bool' | 'int' | 'double' | 'string';
  * @param {string} string - Property value may be any arbitrary string.
  * @param {Date} date - Property may be assigned any `Date` instance.
  */
-type PropertyType = `${BaseType}${'?' | '[]' | '<>' | ''}` | 'date';
+type PropType = `${BasePropType}${'?' | '[]' | '<>' | ''}` | 'date';
 
 type DataType = boolean | number | string;
 type CollectionType = Array<DataType> | Set<DataType>;
 
 /**
  * @type {Object}
- * @param {PropertyType} type - The type of this property.
+ * @param {PropType} type - The type of this property.
  * @param {DataType | CollectionType} [default] - The default value for this
  * property on creation when not otherwise specified.
  */
-interface ObjectSchemaProperty {
-  type: PropertyType;
+interface ObjectSchemaProp {
+  type: PropType;
   default?: DataType | CollectionType;
 }
 
-interface PropertiesTypes {
-  [key: string]: PropertyType | ObjectSchemaProperty | ObjectSchema;
+interface PropsTypes {
+  [key: string]: PropType | ObjectSchemaProp | ObjectSchema;
 }
 
 /**
@@ -46,14 +46,14 @@ interface PropertiesTypes {
  * @param {string} name - Represents the object type.
  * @param {string} [primaryKey] - The name of a `'string'` or `'int'` property
  * that must be unique across all objects of this type within the same table.
- * @param {{[key: string]: PropertyType | ObjectSchemaProperty | ObjectSchema}} property -
+ * @param {{[key: string]: PropType | ObjectSchemaProp | ObjectSchema}} property -
  * An object where the keys are the property names and the values represent the
  * property type.
  */
 interface ObjectSchema {
   name: string;
   primaryKey?: string;
-  property: PropertiesTypes;
+  props: PropsTypes;
 }
 
-export { PropertyType, ObjectSchemaProperty, ObjectSchema };
+export { PropType, ObjectSchemaProp, ObjectSchema };
