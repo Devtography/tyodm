@@ -8,7 +8,7 @@
   "parserOptions": {
     "project": [
       "./tsconfig.json",
-      "./tests/tsconfig.json"
+      "./tsconfig.eslint.json"
     ]
   },
   "plugins": [
@@ -23,6 +23,7 @@
     "plugin:jest/style"
   ],
   "rules": {
+    "class-methods-use-this": "off",
     "max-len": [
       "warn",
       {
@@ -41,6 +42,7 @@
         "alphabetize": {"order": "asc"}
       }
     ],
+    "import/prefer-default-export": "off",
     "no-use-before-define": "off",
     "@typescript-eslint/require-await": "off",
     "@typescript-eslint/no-use-before-define": "warn",
