@@ -23,6 +23,13 @@
     "plugin:jest/style"
   ],
   "rules": {
+    "max-len": [
+      "warn",
+      {
+        "code": 80,
+        "tabWidth": 2
+      }
+    ],
     // Already covered by TypeScript compiler
     "import/default": "off",
     // Already covered by TypeScript compiler
