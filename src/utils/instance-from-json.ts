@@ -11,14 +11,10 @@ function instanceFromJSON<T>(
 ): T {
   const obj = new Type();
 
-  // eslint-disable-next-line no-restricted-syntax
-  for (const prop in jsonObj) {
-    if (Object.prototype.hasOwnProperty.call(jsonObj, prop)) {
-      const key = prop as keyof T;
-
-      obj[key] = jsonObj[prop] as T[keyof T];
-    }
-  }
+  Object.keys(jsonObj).forEach((prop) => {
+    const key = prop as keyof T;
+    obj[key] = jsonObj[prop] as T[keyof T];
+  });
 
   return obj;
 }
