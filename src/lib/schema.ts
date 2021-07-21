@@ -1,59 +1,49 @@
-type BasePropType = 'bool' | 'int' | 'double' | 'string';
-
-/**
- * Available field data types
- *
- * When specifying property types in an {@link ObjectSchema}, you may append `?`
- * to any of the property types to indicate that it is optional. Given a type,
- * *T*, the following postfix operators may be used:
- * - *T*`[]` indicates that the property type is `Array<T>`
- * - *T*`<>` indicates that the property type is `Set<T>`
- *
- * For `Array<T>` & `Set<T>`, appending `?` (i.e. `int?[]`) is considered
- * invalid.
- *
- * @param {boolean} bool - Property value may either be `true` or `false`.
- * @param {number} int - Property may be assigned any number, but will be
- * stored as a round integer, meaning anything after the decimal will be
- * truncated.
- * @param {number} double - Property may be assigned any number, and will have
- * no loss of precision.
- * @param {string} string - Property value may be any arbitrary string.
- * @param {Date} date - Property may be assigned any `Date` instance.
- */
-type PropType = `${BasePropType}${'?' | '[]' | '<>' | ''}` | 'date';
-
-type DataType = boolean | number | string;
-type CollectionType = Array<DataType> | Set<DataType>;
+import { PropType } from './typing';
 
 /**
  * @type {Object}
- * @param {PropType} type - The type of this property.
- * @param {DataType | CollectionType} [default] - The default value for this
- * property on creation when not otherwise specified.
+ * @param {PropType | { type: PropType, optional?: boolean } | Attr} {key} -
+ * Data type of the attribute.
  */
-interface ObjectSchemaProp {
-  type: PropType;
-  default?: DataType | CollectionType;
-}
-
-interface PropsTypes {
-  [key: string]: PropType | ObjectSchemaProp | ObjectSchema;
+interface Attr {
+  [key: string]: PropType | {
+    type: PropType,
+    optional?: boolean,
+  } | Attr;
 }
 
 /**
  * @type {Object}
- * @param {string} name - Represents the object type.
- * @param {string} [primaryKey] - The name of a `'string'` or `'int'` property
- * that must be unique across all objects of this type within the same table.
- * @param {{[key: string]: PropType | ObjectSchemaProp | ObjectSchema}} property -
- * An object where the keys are the property names and the values represent the
- * property type.
+ * @param {'single' | 'collection'} type - Indicates if this property is meant
+ * to be a single record of item or representing a collection of item records.
+ * @param {string?} identifier - Object key of which stores the unique value as
+ * item identifier in a collection. This field MUST be specified if `type` is
+ * set as `collection`.
+ * @param {Attr} attr - Data type of the attribute. See {@link Attr}.
  */
-interface ObjectSchema {
+interface Prop {
+  type: 'single' | 'collection',
+  identifier?: string,
+  attr: Attr,
+}
+
+/**
+ * Layout of the schema object for {@link TyObj}.
+ * @type {Object}
+ * @param {string} name - Name of the data model, usually the class name of the
+ * class the schema is representing. Value of this property will be used as
+ * prefix for the partition key in DynamoDB and `objectId` in MongoDB.
+ * @param {string?} identifier - Name of the property which stores the unique
+ * value to be the postfix of the partition key / objectId` for identifying
+ * the model object in a DynamoDB table / MongoDB collection.
+ * @param {Record<string, Prop>} props - Layouts of the class properties.
+ * The key of each {@link Prop} object will be used as sort key in DynamoDB.
+ * See {@link Prop} for details.
+ */
+interface Schema {
   name: string;
-  primaryKey?: string;
-  props: PropsTypes;
+  identifier?: string;
+  props: Record<string, Prop>;
 }
 
-export { PropType, ObjectSchemaProp, ObjectSchema };
+export { Attr, Prop, Schema };
