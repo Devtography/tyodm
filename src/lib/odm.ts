@@ -49,9 +49,10 @@ class TyODM {
 
     try {
       callback();
-      this.commitTransaction();
+      await this.commitTransaction();
     } catch (err) {
       this.cancelTransaction();
+
       return Promise.reject();
     }
 
@@ -63,9 +64,10 @@ class TyODM {
     // Register an event handler to understand the underlying operations.
   }
 
-  private commitTransaction(): void {
+  private async commitTransaction(): Promise<void> {
     // Read the queue/map and form the transactional write action
     // based on items stored in the queue/map.
+    return Promise.resolve();
   }
 
   private cancelTransaction(): void {
