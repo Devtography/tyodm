@@ -1,6 +1,6 @@
 {
   "name": "tyodm",
-  "version": "0.0.1",
+  "version": "0.1.0-rc.0",
   "description": "Fully typed ODM designed to work with various NoSQL database engines.",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
