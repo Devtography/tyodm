@@ -53,7 +53,7 @@ class TyODM {
     } catch (err) {
       this.cancelTransaction();
 
-      return Promise.reject();
+      throw err;
     }
 
     return Promise.resolve();
