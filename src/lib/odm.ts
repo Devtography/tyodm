@@ -28,16 +28,16 @@ class TyODM {
   }
 
   async objectByKey<T extends Obj>(
-    Type: { new(): T }, key: number | string,
-  ): Promise<T> {
+    Type: { new(): T }, key: string,
+  ): Promise<T | undefined> {
     const obj = new Type();
 
     return obj;
   }
 
   async partialObject<T extends Obj>(
-    Type: { new(): T }, key: number | string,
-    prop: string | { name: string, key: number | string },
+    Type: { new(): T }, key: string,
+    prop: string | { name: string, key: string },
   ): Promise<T> {
     const obj = new Type();
 
