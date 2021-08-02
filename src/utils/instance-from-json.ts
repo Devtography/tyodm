@@ -1,9 +1,9 @@
 /**
  * Cast the JSON object to the targeted class.
  *
- * @param {T} Type - Target type to cast the JSON object to.
- * @param {Record<string, unknown>} jsonObj - The corresponding JSON object.
- * @returns {T} instance of *T* casted from JSON.
+ * @param Type - Target type to cast the JSON object to.
+ * @param jsonObj - The corresponding JSON object.
+ * @returns Instance of *T* casted from JSON.
  */
 function instanceFromJSON<T>(
   Type: { new(): T; },
