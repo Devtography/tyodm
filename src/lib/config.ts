@@ -1,12 +1,13 @@
 import type { Schema } from './schema';
 
 /**
- * @param schema - Set of {@link Schema} suppose to be in the
- * DynamoDB table / MongoDB collection specified.
+ * @param schema - Map of {@link Schema} suppose to be in the
+ * DynamoDB table / MongoDB collection specified. Keys should be the class names
+ * of the corresponding model classes.
  * @internal
  */
 interface BaseConfig {
-  schema: Set<Schema>;
+  schema: Map<string, Schema>;
 }
 
 /**
