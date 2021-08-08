@@ -6,11 +6,11 @@ compatible with various NoSQL database engines.
 ## Getting started
 
 ```sh
-npm install tyodm
+npm install @devtography/tyodm
 ```
 
 ```typescript
-import * as odm from 'tyodm';
+import * as odm from '@devtography/tyodm';
 
 class SampleModel extends odm.Obj {
   static SCHEMA: Schema = {
