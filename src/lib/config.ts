@@ -1,20 +1,20 @@
 import type { Schema } from './schema';
 
 /**
- * @param {Set<Schema>} schema - Set of {@link Schema} suppose to be in the
- * DynamoDB table / MongoDB collection specified.
+ * @param schema - Map of {@link Schema} suppose to be in the
+ * DynamoDB table / MongoDB collection specified. Keys should be the class names
+ * of the corresponding model classes.
+ * @internal
  */
 interface BaseConfig {
-  schema: Set<Schema>;
+  schema: Map<string, Schema>;
 }
 
 /**
- * @type {Object}
- * @param {string} region - AWS region.
- * @param {string?} endpoint - DynamoDB endpoint address.
- * @param {string} table - DynamoDB table to interact with.
- * @param {Set<Schema>} schema - Set of {@link Schema} supported in the table
- * specified.
+ * {@inheritDoc BaseConfig}
+ * @param region - AWS region.
+ * @param endpoint - DynamoDB endpoint address.
+ * @param table - DynamoDB table to interact with.
  */
 interface DynamoDBConfig extends BaseConfig {
   region: string;
@@ -23,12 +23,10 @@ interface DynamoDBConfig extends BaseConfig {
 }
 
 /**
- * @type {Object}
- * @param {string} uri - MongoDB instance address.
- * @param {string} database - Database to access.
- * @param {string} collection - Collection to interact with.
- * @param {Set<Schema>} schema - Set of {@link Schema} supported in the
- * collection specified.
+ * {@inheritDoc BaseConfig}
+ * @param uri - MongoDB instance address.
+ * @param database - Database to access.
+ * @param collection - Collection to interact with.
  */
 interface MongoDBConfig extends BaseConfig {
   uri: string;
