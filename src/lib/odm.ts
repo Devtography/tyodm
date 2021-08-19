@@ -2,6 +2,10 @@ import { DynamoDBConfig, MongoDBConfig } from './config';
 import { Obj } from './object';
 import { Results } from './results';
 
+/**
+ * Enum to indicate which database the ODM instance is associated with.
+ * @public
+ */
 enum ODMMode {
   DynamoDB,
   MongoDB,
@@ -130,4 +134,4 @@ class TyODM {
 }
 
 export default TyODM;
-export { TyODM };
+export { TyODM, ODMMode };

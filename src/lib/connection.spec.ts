@@ -1,4 +1,4 @@
-import { DynamoDBConfig } from './config';
+import { DynamoDBConfig, MongoDBConfig } from './config';
 import * as Connection from './connection';
 import { TyODM } from './odm';
 
@@ -18,8 +18,8 @@ it('should return the same DynamoDBClient', () => {
   const odm1 = new TyODM(config1);
   const odm2 = new TyODM(config2);
 
-  const client1 = Connection.attachDynamoDBClient(odm1, config1);
-  const client2 = Connection.attachDynamoDBClient(odm2, config2);
+  const client1 = Connection.attachDynamoDBClient(odm1);
+  const client2 = Connection.attachDynamoDBClient(odm2);
 
   expect(client1).toEqual(client2);
 });
@@ -40,10 +40,23 @@ it('should return 2 different DynamoDBClient', () => {
   const odm1 = new TyODM(config1);
   const odm2 = new TyODM(config2);
 
-  const client1 = Connection.attachDynamoDBClient(odm1, config1);
-  const client2 = Connection.attachDynamoDBClient(odm2, config2);
+  const client1 = Connection.attachDynamoDBClient(odm1);
+  const client2 = Connection.attachDynamoDBClient(odm2);
 
   expect(client1).not.toEqual(client2);
+});
+
+it('should throw error if `ODMMode` isn\'t `DynamoDB`', () => {
+  const config: MongoDBConfig = {
+    uri: 'localhost',
+    database: 'default',
+    collection: 'default',
+    schema: new Map(),
+  };
+
+  const odm = new TyODM(config);
+
+  expect(() => { Connection.attachDynamoDBClient(odm); }).toThrow();
 });
 
 it('should throw error if TyODM instance is mapped to a client', () => {
@@ -54,7 +67,7 @@ it('should throw error if TyODM instance is mapped to a client', () => {
   };
 
   const odm = new TyODM(config);
-  Connection.attachDynamoDBClient(odm, config);
+  Connection.attachDynamoDBClient(odm);
 
-  expect(() => { Connection.attachDynamoDBClient(odm, config); }).toThrow();
+  expect(() => { Connection.attachDynamoDBClient(odm); }).toThrow();
 });
