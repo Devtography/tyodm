@@ -1,5 +1,6 @@
 import { DynamoDBConfig, MongoDBConfig } from './config';
 import { Obj } from './object';
+import { ODMMode } from './odm-mode';
 import { Results } from './results';
 
 /**

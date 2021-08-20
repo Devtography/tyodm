@@ -1,6 +1,7 @@
 import { DynamoDBClient } from '@aws-sdk/client-dynamodb';
 import { DynamoDBConfig, MongoDBConfig } from './config';
-import { TyODM, ODMMode } from './odm';
+import type { TyODM } from './odm';
+import { ODMMode } from './odm-mode';
 
 const attachedODMs: Map<TyODM, DynamoDBConfig | MongoDBConfig> = new Map();
 
