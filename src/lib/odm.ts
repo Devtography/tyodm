@@ -1,16 +1,10 @@
+import { NotImplementedError } from '../utils/errors';
 import { DynamoDBConfig, MongoDBConfig } from './config';
+import * as connection from './connection';
+import * as db from './db-drivers';
 import { Obj } from './object';
 import { ODMMode } from './odm-mode';
 import { Results } from './results';
-
-/**
- * Enum to indicate which database the ODM instance is associated with.
- * @public
- */
-enum ODMMode {
-  DynamoDB,
-  MongoDB,
-}
 
 /**
  * A `TyODM` instance represents a database.
@@ -29,6 +23,8 @@ class TyODM {
    */
   readonly config: DynamoDBConfig | MongoDBConfig;
 
+  private dbClient?: db.DBDriver;
+
   /**
    * {@link TyODM} constructor.
    * @remarks
@@ -44,6 +40,25 @@ class TyODM {
     } else {
       this.mode = ODMMode.DynamoDB;
     }
+  }
+
+  /**
+   * Attaches the {@link TyODM} instance to the underlying remote database.
+   * @returns Resolved {@link Promise}
+   */
+  async attach(): Promise<void> {
+    switch (this.mode) {
+      case ODMMode.DynamoDB:
+        this.attachToDynamoDB();
+        break;
+      case ODMMode.MongoDB:
+        await this.attachToMongoDB();
+        break;
+      default:
+        break;
+    }
+
+    return Promise.resolve();
   }
 
   /**
@@ -131,6 +146,33 @@ class TyODM {
 
   private cancelTransaction(): void {
     // Clean the queue/map & unregister the event handler.
+  }
+
+  /**
+   * Initial an `DynamoDBDriver` instance with `DynamoDBClient`.
+   * @throws {@link connection#NotDynamoDBModeError}
+   * Thrown if {@link TyODM#mode} isn't {@link ODMMode#DynamoDB}.
+   */
+  private attachToDynamoDB() {
+    try {
+      const client = connection.attachDynamoDBClient(this);
+      this.dbClient = new db.DynamoDBDriver(client);
+    } catch (err) {
+      if (err instanceof connection.NotDynamoDBModeError) {
+        throw err;
+      }
+    }
+  }
+
+  /**
+   * Initial on `MongoDBDriver` instance.
+   * @throws {@link NotImplementedError}
+   * Thrown if the function is called.
+   */
+  private async attachToMongoDB(): Promise<void> {
+    this.dbClient = new db.MongoDBDriver();
+
+    throw new NotImplementedError(this.attachToMongoDB.name);
   }
 }
 
