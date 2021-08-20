@@ -1,7 +1,8 @@
 import { DynamoDBClient } from '@aws-sdk/client-dynamodb';
-import { DynamoDBConfig, MongoDBConfig } from './config';
-import type { TyODM } from './odm';
-import { ODMMode } from './odm-mode';
+import { DynamoDBConfig, MongoDBConfig } from '../config';
+import type { TyODM } from '../odm';
+import { ODMMode } from '../odm-mode';
+import * as err from './error';
 
 const attachedODMs: Map<TyODM, DynamoDBConfig | MongoDBConfig> = new Map();
 
@@ -14,25 +15,21 @@ const dynamoClients: Map<string, DynamoDBClient> = new Map();
  * initialised if otherwise.
  * @param odm - The {@link TyODM} object to attach.
  * @returns The correspond {@link DynamoDBClient} for database actions.
- * @throws {@link Error}
- * `Error` will be thrown if {@link TyODM#mode} of the odm instance passed in
- * isn't {@link ODMMode#DynamoDB}.
- * @throws {@link Error}
- * `Error` will be throw if {@link TyODM} instance passed in has already mapped
- * to a database client.
+ * @throws {@link err#NotDynamoDBModeError}
+ * Thrown if {@link TyODM#mode} of the odm instance passed in isn't
+ * {@link ODMMode#DynamoDB}.
+ * @throws {@link err#ODMAttachedError}
+ * Throw if {@link TyODM} instance passed in has already mapped to a database
+ * client.
  * @internal
  */
 function attachDynamoDBClient(odm: TyODM): DynamoDBClient {
   if (odm.mode !== ODMMode.DynamoDB) {
-    throw new Error(
-      'Specified ODM instance not suppose to attach with DynamoDBClient',
-    );
+    throw new err.NotDynamoDBModeError();
   }
 
   if (attachedODMs.has(odm)) {
-    throw new Error(
-      'Specified ODM instance has already attached to a database client',
-    );
+    throw new err.ODMAttachedError();
   }
 
   const config = odm.config as DynamoDBConfig;

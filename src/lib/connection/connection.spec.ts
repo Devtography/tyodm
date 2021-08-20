@@ -1,6 +1,7 @@
-import { DynamoDBConfig, MongoDBConfig } from './config';
+import { DynamoDBConfig, MongoDBConfig } from '../config';
+import { TyODM } from '../odm';
 import * as connection from './connection';
-import { TyODM } from './odm';
+import * as err from './error';
 
 it('should return the same DynamoDBClient', () => {
   const config1: DynamoDBConfig = {
@@ -56,7 +57,8 @@ it('should throw error if `ODMMode` isn\'t `DynamoDB`', () => {
 
   const odm = new TyODM(config);
 
-  expect(() => { connection.attachDynamoDBClient(odm); }).toThrow();
+  expect(() => { connection.attachDynamoDBClient(odm); })
+    .toThrow(err.NotDynamoDBModeError);
 });
 
 it('should throw error if TyODM instance is mapped to a client', () => {
@@ -69,5 +71,6 @@ it('should throw error if TyODM instance is mapped to a client', () => {
   const odm = new TyODM(config);
   connection.attachDynamoDBClient(odm);
 
-  expect(() => { connection.attachDynamoDBClient(odm); }).toThrow();
+  expect(() => { connection.attachDynamoDBClient(odm); })
+    .toThrow(err.ODMAttachedError);
 });
