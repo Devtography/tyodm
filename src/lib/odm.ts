@@ -135,4 +135,4 @@ class TyODM {
 }
 
 export default TyODM;
-export { TyODM, ODMMode };
+export { TyODM };
