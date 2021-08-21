@@ -1,3 +1,4 @@
+import { isDeepStrictEqual } from 'util';
 import { DynamoDBClient } from '@aws-sdk/client-dynamodb';
 import { DynamoDBConfig, MongoDBConfig } from '../config';
 import type { TyODM } from '../odm';
@@ -57,4 +58,42 @@ function attachDynamoDBClient(odm: TyODM): DynamoDBClient {
   return client;
 }
 
-export { attachDynamoDBClient };
+/**
+ * Detach the {@link TyODM} instance from the {@link DynamoDBClient} attached.
+ * @param odm - The {@link TyODM} object to detach.
+ * @returns `true` if {@link TyODM} instance detached successfully. `false` if
+ * instance specified isn't attached or {@link DynamoDBClient} failed to remove
+ * from the internal `Map`.
+ * @throws {@link err#NotDynamoDBModeError}
+ * Thrown if {@link TyODM#mode} of the odm instance passed in isn't
+ * {@link ODMMode#DynamoDB}.
+ * @internal
+ */
+function detachDynamoDBClient(odm: TyODM): boolean {
+  if (odm.mode !== ODMMode.DynamoDB) {
+    throw new err.NotDynamoDBModeError();
+  }
+
+  if (!attachedODMs.has(odm)) {
+    return false;
+  }
+
+  attachedODMs.delete(odm);
+
+  const config = odm.config as DynamoDBConfig;
+
+  // Disabled rule to allow function termination within the loop.
+  // eslint-disable-next-line no-restricted-syntax
+  for (const otherConfig of attachedODMs) {
+    if (isDeepStrictEqual(config, otherConfig)) { return true; }
+  }
+
+  const clientTarget = JSON.stringify({
+    region: config.region,
+    endpoint: config.endpoint,
+  });
+
+  return dynamoClients.delete(clientTarget);
+}
+
+export { attachDynamoDBClient, detachDynamoDBClient };
