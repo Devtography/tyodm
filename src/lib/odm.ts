@@ -43,6 +43,14 @@ class TyODM {
   }
 
   /**
+   * Indicates if the instance is attached to the targeted database instance.
+   * @readonly
+   */
+  get attached(): boolean {
+    return this.dbClient !== undefined;
+  }
+
+  /**
    * Attaches the {@link TyODM} instance to the underlying database instance.
    * @returns Resolved {@link Promise}
    */

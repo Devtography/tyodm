@@ -7,6 +7,13 @@ const dynamoDBConfig: DynamoDBConfig = {
   schema: new Map(),
 };
 
+it('should return true if ODM instance attached successfully', async () => {
+  const odm = new TyODM(dynamoDBConfig);
+  await odm.attach();
+
+  expect(odm.attached).toBeTruthy();
+});
+
 it('should return true for ODM instance detached successfully', async () => {
   const odm = new TyODM(dynamoDBConfig);
   await odm.attach();
