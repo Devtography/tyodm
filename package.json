@@ -7,7 +7,11 @@
   "scripts": {
     "build": "rimraf dist && tsc",
     "test": "jest --detectOpenHandles --coverage --verbose",
-    "watch-test": "npm run test -- --watchAll"
+    "watch-test": "npm run test -- --watchAll",
+    "next-rc": "npm --no-git-tag-version version prerelease --preid=rc",
+    "next-patch": "npm --no-git-tag-version version prepatch",
+    "next-minor": "npm --no-git-tag-version version preminor",
+    "next-major": "npm --no-git-tag-version version premajor"
   },
   "files": [
     "dist/**/*"
