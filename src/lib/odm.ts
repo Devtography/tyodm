@@ -43,7 +43,7 @@ class TyODM {
   }
 
   /**
-   * Indicates if the instance is attached to the targeted database instance.
+   * Indicates if the instance is attached to the targeted database client.
    * @readonly
    */
   get attached(): boolean {
@@ -51,7 +51,7 @@ class TyODM {
   }
 
   /**
-   * Attaches the {@link TyODM} instance to the underlying database instance.
+   * Attaches the {@link TyODM} instance to the targeted database client.
    * @returns Resolved {@link Promise}
    */
   async attach(): Promise<void> {
@@ -70,7 +70,7 @@ class TyODM {
   }
 
   /**
-   * Detach the {@link TyODM} instance from the underlying database instance
+   * Detach the {@link TyODM} instance from the targeted database client
    * attached.
    * @returns `true` if detached successfully. `false` if instance specified
    * isn't attached or internal mapping failed.
