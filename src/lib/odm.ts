@@ -1,11 +1,10 @@
+import { NotImplementedError } from '../utils/errors';
 import { DynamoDBConfig, MongoDBConfig } from './config';
+import * as connection from './connection';
+import * as db from './db-drivers';
 import { Obj } from './object';
+import { ODMMode } from './odm-mode';
 import { Results } from './results';
-
-enum ODMMode {
-  DynamoDB,
-  MongoDB,
-}
 
 /**
  * A `TyODM` instance represents a database.
@@ -24,6 +23,8 @@ class TyODM {
    */
   readonly config: DynamoDBConfig | MongoDBConfig;
 
+  private dbClient?: db.DBDriver;
+
   /**
    * {@link TyODM} constructor.
    * @remarks
@@ -39,6 +40,56 @@ class TyODM {
     } else {
       this.mode = ODMMode.DynamoDB;
     }
+  }
+
+  /**
+   * Indicates if the instance is attached to the targeted database client.
+   * @readonly
+   */
+  get attached(): boolean {
+    return this.dbClient !== undefined;
+  }
+
+  /**
+   * Attaches the {@link TyODM} instance to the targeted database client.
+   * @returns Resolved {@link Promise}
+   */
+  async attach(): Promise<void> {
+    switch (this.mode) {
+      case ODMMode.DynamoDB:
+        this.attachToDynamoDB();
+        break;
+      case ODMMode.MongoDB:
+        await this.attachToMongoDB();
+        break;
+      default:
+        break;
+    }
+
+    return Promise.resolve();
+  }
+
+  /**
+   * Detach the {@link TyODM} instance from the targeted database client
+   * attached.
+   * @returns `true` if detached successfully. `false` if instance specified
+   * isn't attached or internal mapping failed.
+   */
+  async detach(): Promise<boolean> {
+    let result = false;
+
+    switch (this.mode) {
+      case ODMMode.DynamoDB:
+        result = this.detachFromDynamoDB();
+        break;
+      case ODMMode.MongoDB:
+        result = await this.detachFromMongoDB();
+        break;
+      default:
+        break;
+    }
+
+    return result;
   }
 
   /**
@@ -126,6 +177,57 @@ class TyODM {
 
   private cancelTransaction(): void {
     // Clean the queue/map & unregister the event handler.
+  }
+
+  /**
+   * Initial an `DynamoDBDriver` instance with `DynamoDBClient`.
+   * @throws {@link connection#NotDynamoDBModeError}
+   * Thrown if {@link TyODM#mode} isn't {@link ODMMode#DynamoDB}.
+   */
+  private attachToDynamoDB() {
+    try {
+      const client = connection.attachDynamoDBClient(this);
+      this.dbClient = new db.DynamoDBDriver(client);
+    } catch (err) {
+      if (err instanceof connection.NotDynamoDBModeError) {
+        throw err;
+      }
+    }
+  }
+
+  /**
+   * Initial on `MongoDBDriver` instance.
+   * @throws {@link NotImplementedError}
+   * Thrown if the function is called.
+   */
+  private async attachToMongoDB(): Promise<void> {
+    this.dbClient = new db.MongoDBDriver();
+
+    throw new NotImplementedError(this.attachToMongoDB.name);
+  }
+
+  /**
+   * Detach the `DynamoDBClient` attached with this instance.
+   * @returns Detach result.
+   */
+  private detachFromDynamoDB(): boolean {
+    const result = connection.detachDynamoDBClient(this);
+
+    if (result) {
+      this.dbClient = undefined;
+    }
+
+    return result;
+  }
+
+  /**
+   * Detach the MongoDB client attached with this instance.
+   * @returns Detach result.
+   */
+  private async detachFromMongoDB(): Promise<boolean> {
+    this.dbClient = undefined;
+
+    throw new NotImplementedError(this.detachFromDynamoDB.name);
   }
 }
 
