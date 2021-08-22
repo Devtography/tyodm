@@ -26,6 +26,7 @@
   "author": "Wing Chau",
   "license": "MIT",
   "dependencies": {
+    "@aws-sdk/client-dynamodb": "^3.25.0",
     "ulid": "^2.3.0"
   },
   "devDependencies": {
