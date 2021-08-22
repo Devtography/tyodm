@@ -43,7 +43,7 @@ class TyODM {
   }
 
   /**
-   * Attaches the {@link TyODM} instance to the underlying remote database.
+   * Attaches the {@link TyODM} instance to the underlying database instance.
    * @returns Resolved {@link Promise}
    */
   async attach(): Promise<void> {
@@ -59,6 +59,29 @@ class TyODM {
     }
 
     return Promise.resolve();
+  }
+
+  /**
+   * Detach the {@link TyODM} instance from the underlying database instance
+   * attached.
+   * @returns `true` if detached successfully. `false` if instance specified
+   * isn't attached or internal mapping failed.
+   */
+  async detach(): Promise<boolean> {
+    let result = false;
+
+    switch (this.mode) {
+      case ODMMode.DynamoDB:
+        result = this.detachFromDynamoDB();
+        break;
+      case ODMMode.MongoDB:
+        result = await this.detachFromMongoDB();
+        break;
+      default:
+        break;
+    }
+
+    return result;
   }
 
   /**
@@ -173,6 +196,30 @@ class TyODM {
     this.dbClient = new db.MongoDBDriver();
 
     throw new NotImplementedError(this.attachToMongoDB.name);
+  }
+
+  /**
+   * Detach the `DynamoDBClient` attached with this instance.
+   * @returns Detach result.
+   */
+  private detachFromDynamoDB(): boolean {
+    const result = connection.detachDynamoDBClient(this);
+
+    if (result) {
+      this.dbClient = undefined;
+    }
+
+    return result;
+  }
+
+  /**
+   * Detach the MongoDB client attached with this instance.
+   * @returns Detach result.
+   */
+  private async detachFromMongoDB(): Promise<boolean> {
+    this.dbClient = undefined;
+
+    throw new NotImplementedError(this.detachFromDynamoDB.name);
   }
 }
 
