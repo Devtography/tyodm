@@ -15,7 +15,7 @@ const emitter = new EventEmitter();
  * @returns `true` if the event is being listened. `false` if otherwise.
  * @internal
  */
-function newObj<T>(obj: Obj, Type: { new(): T }): boolean {
+function newObj<T extends Obj>(obj: Obj, Type: { new(): T }): boolean {
   return emitter.emit(Event.NewObj, obj, Type);
 }
 
@@ -25,7 +25,7 @@ function newObj<T>(obj: Obj, Type: { new(): T }): boolean {
  * @throws {@link errors#MaxListenerExceededException}
  * Thrown if the event is already being assigned to another listener.
  */
-function onNewObjEvent<T>(
+function onNewObjEvent<T extends Obj>(
   listener: (obj: Obj, Type: { new(): T }) => void,
 ): void {
   if (emitter.listenerCount(Event.NewObj) > 0) {
