@@ -2,9 +2,11 @@ import { NotImplementedError } from '../utils/errors';
 import { DynamoDBConfig, MongoDBConfig } from './config';
 import * as connection from './connection';
 import * as db from './db-drivers';
+import * as writeEvents from './events/db-write-events';
 import { Obj } from './object';
 import { ODMMode } from './odm-mode';
 import { Results } from './results';
+import type { PendingWriteAction } from './typing';
 
 /**
  * A `TyODM` instance represents a database.
@@ -24,6 +26,7 @@ class TyODM {
   readonly config: DynamoDBConfig | MongoDBConfig;
 
   private dbClient?: db.DBDriver;
+  private dbWriteQueue?: Array<PendingWriteAction>;
 
   /**
    * {@link TyODM} constructor.
@@ -167,6 +170,12 @@ class TyODM {
   private beginTransaction(): void {
     // Start a queue/map ready to save the action.
     // Register an event handler to understand the underlying operations.
+    writeEvents.onNewObjEvent((obj, ObjType) => {
+      this.dbWriteQueue?.push({
+        event: writeEvents.Event.NewObj,
+        value: { obj, ObjType },
+      });
+    });
   }
 
   private async commitTransaction(): Promise<void> {
