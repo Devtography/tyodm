@@ -1,13 +1,7 @@
 import { EventEmitter } from 'events';
-import type { Obj } from '../object';
-import * as errors from './errors';
-
-/**
- * @internal
- */
-enum WriteEvent {
-  NewObj = 'insert new object',
-}
+import type { Obj } from '../../object';
+import * as errors from '../errors';
+import { Event } from './events';
 
 /**
  * Singleton write events emitter.
@@ -22,7 +16,7 @@ const emitter = new EventEmitter();
  * @internal
  */
 function newObj<T>(obj: Obj, Type: { new(): T }): boolean {
-  return emitter.emit(WriteEvent.NewObj, obj, Type);
+  return emitter.emit(Event.NewObj, obj, Type);
 }
 
 /**
@@ -34,12 +28,12 @@ function newObj<T>(obj: Obj, Type: { new(): T }): boolean {
 function onNewObjEvent<T>(
   listener: (obj: Obj, Type: { new(): T }) => void,
 ): void {
-  if (emitter.listenerCount(WriteEvent.NewObj) > 0) {
-    throw new errors.MaxListenerExceededException(WriteEvent.NewObj);
+  if (emitter.listenerCount(Event.NewObj) > 0) {
+    throw new errors.MaxListenerExceededException(Event.NewObj);
   }
 
-  emitter.on(WriteEvent.NewObj, listener);
+  emitter.on(Event.NewObj, listener);
 }
 
-export { WriteEvent, emitter };
+export { emitter };
 export { newObj, onNewObjEvent };
