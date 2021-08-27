@@ -14,6 +14,8 @@ class NotImplementedError extends Error {
     }
 
     super(msg);
+
+    Object.setPrototypeOf(this, NotImplementedError.prototype);
   }
 }
 
