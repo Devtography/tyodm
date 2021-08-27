@@ -1,3 +1,22 @@
+/* eslint-disable max-classes-per-file */
+/* Above rule disabled for this file as this module is only suppose to contain
+ * custom error types by extending `Error`.
+ */
+
+/**
+ * Error to indicate an action is not being supported yet.
+ * @public
+ */
+class ActionNotSupportedException extends Error {
+  constructor(action: string) {
+    const msg = `Action \`${action}\` is not yet supported`;
+
+    super(msg);
+
+    Object.setPrototypeOf(this, ActionNotSupportedException.prototype);
+  }
+}
+
 /**
  * @internal
  */
@@ -12,4 +31,4 @@ class MaxListenerExceededException extends Error {
   }
 }
 
-export { MaxListenerExceededException };
+export { ActionNotSupportedException, MaxListenerExceededException };
