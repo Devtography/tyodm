@@ -1,12 +1,12 @@
 import { NotImplementedError } from '../utils/errors';
 import { DynamoDBConfig, MongoDBConfig } from './config';
 import * as connection from './connection';
+import type { PendingWriteAction } from './datatype/typings';
 import * as db from './db-drivers';
 import * as writeEvents from './events/db-write-events';
 import { Obj } from './object';
 import { ODMMode } from './odm-mode';
 import { Results } from './results';
-import type { PendingWriteAction } from './typing';
 
 /**
  * A `TyODM` instance represents a database.

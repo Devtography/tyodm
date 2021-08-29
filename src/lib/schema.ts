@@ -1,4 +1,4 @@
-import { PropType } from './typing';
+import { PropType } from './datatype/typings';
 
 /**
  * @param key - Data type of the attribute.

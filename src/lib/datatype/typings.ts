@@ -1,6 +1,6 @@
-import type { Event as DbWriteEvent } from './events/db-write-events';
-import * as dbWriteActions from './events/db-write-events/actions';
-import type { Obj } from './object';
+import type { Event as DbWriteEvent } from '../events/db-write-events';
+import * as dbWriteActions from '../events/db-write-events/actions';
+import type { Obj } from '../object';
 
 type ScalarType = 'bool' | 'int' | 'double' | 'decimal' | 'string';
 
