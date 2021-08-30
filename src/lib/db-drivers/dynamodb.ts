@@ -1,8 +1,12 @@
+/* eslint-disable @typescript-eslint/no-non-null-assertion */
 import {
+  AttributeValue,
   DynamoDBClient,
   TransactWriteItem,
   TransactWriteItemsCommand,
 } from '@aws-sdk/client-dynamodb';
+import * as mapper from '../datatype/type-mappers/dynamodb';
+import { PropType } from '../datatype/typings';
 import { DBDriver } from './driver';
 import { MaxWriteActionExceededException } from './errors';
 
@@ -50,6 +54,61 @@ class DynamoDBDriver extends DBDriver {
     }
 
     return Promise.resolve();
+  }
+
+  private buildAttributeValue(
+    elm: unknown, propType: PropType,
+  ): AttributeValue {
+    const datatype = mapper.toDBDataType(propType);
+    const attrVal: { [key: string]: unknown } = {};
+
+    switch (datatype) {
+      case ('S'):
+        attrVal[datatype] = elm as string;
+        break;
+      case ('N'):
+        attrVal[datatype] = (elm as number).toString();
+        break;
+      case ('BOOL'):
+        attrVal[datatype] = elm as boolean;
+        break;
+      case ('SS'):
+        switch (propType) {
+          case ('decimal[]'):
+            attrVal[datatype] = (elm as number[]).map(String);
+            break;
+          case ('decimal<>'):
+            attrVal[datatype] = Array.from(
+              elm as Set<number>, (val) => val.toString(),
+            );
+            break;
+          case ('string[]'):
+            attrVal[datatype] = elm as string[];
+            break;
+          case ('string<>'):
+            attrVal[datatype] = elm as Set<string>;
+            break;
+          default: break;
+        }
+        break;
+      case ('NS'):
+        if (propType === 'int[]' || propType === 'double[]') {
+          attrVal[datatype] = elm as number[];
+        } else { attrVal[datatype] = elm as Set<number>; }
+        break;
+      case ('L'): {
+        const arr: AttributeValue[] = [];
+        if (propType === 'bool[]') {
+          (elm as boolean[]).forEach((val) => { arr.push({ BOOL: val }); });
+        } else {
+          (elm as Set<boolean>).forEach((val) => { arr.push({ BOOL: val }); });
+        }
+        break;
+      }
+      default: break;
+    }
+
+    return attrVal as unknown as AttributeValue;
   }
 }
 
