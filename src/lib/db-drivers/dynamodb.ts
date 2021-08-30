@@ -7,6 +7,8 @@ import {
 } from '@aws-sdk/client-dynamodb';
 import * as mapper from '../datatype/type-mappers/dynamodb';
 import { PropType } from '../datatype/typings';
+import { SchemaNotMatchError } from '../errors';
+import type { Attr } from '../schema';
 import { DBDriver } from './driver';
 import { MaxWriteActionExceededException } from './errors';
 
@@ -54,6 +56,63 @@ class DynamoDBDriver extends DBDriver {
     }
 
     return Promise.resolve();
+  }
+
+  /**
+   * {@link TransactWriteItem} builder.
+   * @param pk - Partition key.
+   * @param sk - Sort Key.
+   * @param elm - Data to compile to {@link TransactWriteItem}.
+   * @param elmLayout - Schema which describes the layout of `elm`.
+   * @returns The corresponding {@link TransactWriteItem}.
+   * @throws {@link SchemaNotMatchError}
+   * Thrown if any of the property in `elm` not found in `elmLayout`.
+   * @internal
+   */
+  buildPutTransactWriteItem(
+    pk: string, sk: string, elm: Record<string, unknown>, elmLayout: Attr,
+  ): TransactWriteItem {
+    const writeItem: TransactWriteItem = {
+      Put: {
+        Item: { pk: { S: pk }, sk: { S: sk } },
+        TableName: this.table,
+      },
+    };
+
+    Object.keys(elm).forEach((key) => {
+      if (elmLayout[key] === undefined) {
+        throw new SchemaNotMatchError(
+          `Schema of object property \`${key}\` not found`,
+        );
+      }
+
+      if (typeof elmLayout[key] === 'string') {
+        writeItem.Put!.Item![key] = this.buildAttributeValue(
+          elm[key], elmLayout[key] as PropType,
+        );
+      } else if (typeof elmLayout[key] === 'object') {
+        const attrVal: { M: { [key: string]: unknown } } = { M: {} };
+
+        Object.keys(elm[key] as Record<string, unknown>).forEach((propKey) => {
+          const subObjLayout = elmLayout[key] as Record<string, PropType>;
+
+          if (subObjLayout[propKey] === undefined) {
+            throw new SchemaNotMatchError(
+              `Schema of sub-object property \`${propKey}\` not found`,
+            );
+          }
+
+          attrVal.M[propKey] = this.buildAttributeValue(
+            (elm[key] as Record<string, unknown>)[propKey],
+            subObjLayout[propKey],
+          );
+        });
+
+        writeItem.Put!.Item![key] = attrVal as unknown as AttributeValue;
+      }
+    });
+
+    return writeItem;
   }
 
   private buildAttributeValue(
