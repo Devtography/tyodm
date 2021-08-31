@@ -31,3 +31,15 @@ export class SchemaNotMatchError extends Error {
     Object.setPrototypeOf(this, SchemaNotMatchError.prototype);
   }
 }
+
+/**
+ * Error to indicate part(s) of the schema is invalid.
+ * @public
+ */
+export class InvalidSchemaError extends Error {
+  constructor(message?: string) {
+    super(message);
+
+    Object.setPrototypeOf(this, SchemaNotMatchError.prototype);
+  }
+}
