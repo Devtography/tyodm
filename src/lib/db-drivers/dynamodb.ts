@@ -152,8 +152,12 @@ class DynamoDBDriver extends DBDriver {
         break;
       case ('NS'):
         if (propType === 'int[]' || propType === 'double[]') {
-          attrVal[datatype] = elm as number[];
-        } else { attrVal[datatype] = elm as Set<number>; }
+          attrVal[datatype] = (elm as number[]).map(String);
+        } else {
+          attrVal[datatype] = Array.from(
+            elm as Set<number>, (val) => val.toString(),
+          );
+        }
         break;
       case ('L'): {
         const arr: AttributeValue[] = [];
