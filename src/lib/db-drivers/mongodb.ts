@@ -1,4 +1,5 @@
 import { NotImplementedError } from '../../utils/errors';
+import type { Obj } from '../object';
 import { DBDriver } from './driver';
 
 /**
@@ -6,6 +7,10 @@ import { DBDriver } from './driver';
  * @internal
  */
 class MongoDBDriver extends DBDriver {
+  insertObj<T extends Obj>(_obj: T): void {
+    throw new NotImplementedError(this.insertObj.name);
+  }
+
   async commitWriteTransaction(): Promise<void> {
     throw new NotImplementedError(this.commitWriteTransaction.name);
   }

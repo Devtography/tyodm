@@ -5,9 +5,11 @@ import {
   TransactWriteItem,
   TransactWriteItemsCommand,
 } from '@aws-sdk/client-dynamodb';
+import { InvalidPropertyError } from '../../utils/errors';
 import * as mapper from '../datatype/type-mappers/dynamodb';
 import { PropType } from '../datatype/typings';
-import { SchemaNotMatchError } from '../errors';
+import { InvalidSchemaError, SchemaNotMatchError } from '../errors';
+import type { Obj } from '../object';
 import type { Attr } from '../schema';
 import { DBDriver } from './driver';
 import { MaxWriteActionExceededException } from './errors';
@@ -21,13 +23,101 @@ import { MaxWriteActionExceededException } from './errors';
 class DynamoDBDriver extends DBDriver {
   private readonly client: DynamoDBClient;
   private readonly table: string;
-  private transactWriteItems: Array<TransactWriteItem> = [];
+  readonly transactWriteItems: Array<TransactWriteItem> = [];
 
   constructor(client: DynamoDBClient, table: string) {
     super();
 
     this.client = client;
     this.table = table;
+  }
+
+  /**
+   * Processes the entire TyODM object to a collection of
+   * {@link TransactWriteItem} to prepare the data for being write into the
+   * targeted DynamoDB.
+   * @param obj - TyODM data object to insert to DynamoDB.
+   * @throws {@link SchemaNotMatchError}
+   * Thrown if the schema defined for the object doesn't appear to completely
+   * matches the properties found in the object.
+   * @throws {@link InvalidSchemaError}
+   * Thrown if `type` of any property is neither `'single'` nor `'collection'`,
+   * or value of `identifier` is missing for type `'collection'`.
+   * @throws {@link InvalidPropertyError}
+   * Thrown if any of the top level class property found other than the
+   * identifier defined isn't an object.
+   */
+  insertObj<T extends Obj>(obj: T): void {
+    Object.keys(obj).forEach((key) => {
+      // Skips property for top level identifier (a.k.a PK)
+      if (key === 'objId' || key === obj.objectSchema().identifier) {
+        return;
+      }
+
+      const propLayout = obj.objectSchema().props[key];
+
+      if (propLayout === undefined) {
+        throw new SchemaNotMatchError(
+          `Schema of property \`${key}\` not found`,
+        );
+      }
+
+      const pk = `${obj.objectSchema().name}#${obj.objectId}`;
+      const prop = obj[key as keyof T] as unknown;
+
+      if (typeof prop !== 'object') {
+        throw new InvalidPropertyError(
+          `Property \`${key}: ${typeof prop}\` is not valid for a TyODM object`,
+        );
+      }
+
+      switch (propLayout.type) {
+        case ('single'):
+          if (prop instanceof Map) {
+            throw new SchemaNotMatchError(
+              `Property \`${key}\` is an instance of \`Map\` but defined as `
+              + `\`collection\` in schema section \`${key}.type\``,
+            );
+          }
+
+          this.transactWriteItems.push(
+            this.buildPutTransactWriteItem(
+              pk, key, prop as Record<string, unknown>, propLayout.attr,
+            ),
+          );
+          break;
+        case ('collection'):
+          if (!(prop instanceof Map)) {
+            throw new SchemaNotMatchError(
+              `Property \`${key}\` isn't an instance of \`Map\` but defined `
+              + `as \`collection\` in schema section \`${key}.type\``,
+            );
+          }
+
+          if (propLayout.identifier === undefined) {
+            throw new InvalidSchemaError(
+              `Value of \`identifier\` is missing on property \`${key}\``,
+            );
+          }
+
+          // Iterates the `Map`
+          (prop as Map<string, Record<string, unknown>>)
+            .forEach((elm, identifier) => {
+              const sk = `${key}#${identifier}`;
+
+              this.transactWriteItems.push(
+                this.buildPutTransactWriteItem(pk, sk, elm, propLayout.attr),
+              );
+            });
+
+          break;
+        default:
+          throw new InvalidSchemaError(
+            'Invalid property type. `type` of property must be either '
+            + '\'single\' or \'collection\'',
+          );
+      }
+    });
   }
 
   /**

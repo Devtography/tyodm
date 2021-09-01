@@ -46,6 +46,72 @@ beforeAll(() => {
   driver = new DynamoDBDriver(client, 'default');
 });
 
+beforeEach(() => {
+  driver.transactWriteItems.length = 0; // reset the array
+});
+
+describe('function `insertObj`', () => {
+  it('should push instances of `TransactWriteItem` to array '
+  + '`transactWriteItems` for object passed in', () => {
+    const ulid1 = ulid();
+    const ulid2 = ulid();
+
+    const obj = new MockObj();
+    obj.meta = { name: 'mocker' };
+    obj.row1 = { subObj: { prop1: [1, 2, 3] } };
+    obj.collection = new Map([
+      [ulid1, { collectionId: ulid1, sampleSet: [1, 3, 5, 7] }],
+      [ulid2, { collectionId: ulid2, sampleSet: [2, 4, 6, 8] }],
+    ]);
+
+    expect(() => { driver.insertObj(obj); }).not.toThrow();
+    expect(driver.transactWriteItems).toEqual([
+      {
+        Put: {
+          Item: {
+            pk: { S: `MockObj#${obj.objectId}` },
+            sk: { S: 'meta' },
+            name: { S: 'mocker' },
+          },
+          TableName: 'default',
+        },
+      },
+      {
+        Put: {
+          Item: {
+            pk: { S: `MockObj#${obj.objectId}` },
+            sk: { S: 'row1' },
+            subObj: { M: { prop1: { SS: ['1', '2', '3'] } } },
+          },
+          TableName: 'default',
+        },
+      },
+      {
+        Put: {
+          Item: {
+            pk: { S: `MockObj#${obj.objectId}` },
+            sk: { S: `collection#${ulid1}` },
+            collectionId: { S: ulid1 },
+            sampleSet: { NS: ['1', '3', '5', '7'] },
+          },
+          TableName: 'default',
+        },
+      },
+      {
+        Put: {
+          Item: {
+            pk: { S: `MockObj#${obj.objectId}` },
+            sk: { S: `collection#${ulid2}` },
+            collectionId: { S: ulid2 },
+            sampleSet: { NS: ['2', '4', '6', '8'] },
+          },
+          TableName: 'default',
+        },
+      },
+    ]);
+  });
+});
+
 describe('function `buildPutTransactionWriteItem`', () => {
   it('should return `TransactWriteItem` for object passed in', () => {
     const obj = new MockObj();
