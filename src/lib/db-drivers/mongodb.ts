@@ -14,6 +14,10 @@ class MongoDBDriver extends DBDriver {
   async commitWriteTransaction(): Promise<void> {
     throw new NotImplementedError(this.commitWriteTransaction.name);
   }
+
+  cancelWriteTransaction(): void {
+    throw new NotImplementedError(this.cancelWriteTransaction.name);
+  }
 }
 
 export { MongoDBDriver };

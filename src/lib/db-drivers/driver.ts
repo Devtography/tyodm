@@ -31,6 +31,11 @@ abstract class DBDriver {
    * @virtual
    */
   abstract commitWriteTransaction(): Promise<void>;
+
+  /**
+   * Cancels the write transaction.
+   */
+  abstract cancelWriteTransaction(): void;
 }
 
 export { DBDriver };

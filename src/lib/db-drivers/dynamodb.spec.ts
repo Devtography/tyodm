@@ -112,6 +112,18 @@ describe('function `insertObj`', () => {
   });
 });
 
+describe('function `cancelTransaction`', () => {
+  it('should reset the array `transactWriteItems`', () => {
+    const obj = new MockObj();
+    obj.meta = { name: 'mocker' };
+
+    driver.insertObj(obj);
+    driver.cancelWriteTransaction();
+
+    expect(driver.transactWriteItems).toHaveLength(0);
+  });
+});
+
 describe('function `buildPutTransactionWriteItem`', () => {
   it('should return `TransactWriteItem` for object passed in', () => {
     const obj = new MockObj();

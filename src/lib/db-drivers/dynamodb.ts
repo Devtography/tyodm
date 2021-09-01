@@ -32,6 +32,7 @@ class DynamoDBDriver extends DBDriver {
     this.table = table;
   }
 
+  // #region Implement functions from DBDriver
   /**
    * Processes the entire TyODM object to a collection of
    * {@link TransactWriteItem} to prepare the data for being write into the
@@ -147,6 +148,11 @@ class DynamoDBDriver extends DBDriver {
 
     return Promise.resolve();
   }
+
+  cancelWriteTransaction(): void {
+    this.transactWriteItems.length = 0; // resets the array.
+  }
+  // #endregion
 
   /**
    * {@link TransactWriteItem} builder.
