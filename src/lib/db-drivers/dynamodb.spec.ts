@@ -1,3 +1,8 @@
+import {
+  CreateTableCommand,
+  DeleteTableCommand,
+  DynamoDBClient,
+} from '@aws-sdk/client-dynamodb';
 import { ulid } from 'ulid';
 import * as connection from '../connection';
 import { Obj } from '../object';
@@ -29,6 +34,7 @@ class MockObj extends Obj {
 }
 
 let odm: TyODM;
+let client: DynamoDBClient;
 let driver: DynamoDBDriver;
 
 beforeAll(() => {
@@ -37,17 +43,34 @@ beforeAll(() => {
 
   odm = new TyODM({
     region: 'us-west-1',
-    endpoint: 'localhost:8000',
+    endpoint: 'http://localhost:8000',
     table: 'default',
     schema: schemaMap,
   });
 
-  const client = connection.attachDynamoDBClient(odm);
+  client = connection.attachDynamoDBClient(odm);
   driver = new DynamoDBDriver(client, 'default');
 });
 
-beforeEach(() => {
+beforeEach(async () => {
   driver.transactWriteItems.length = 0; // reset the array
+
+  const cmd = new CreateTableCommand({
+    TableName: 'default',
+    KeySchema: [
+      { AttributeName: 'pk', KeyType: 'HASH' },
+      { AttributeName: 'sk', KeyType: 'RANGE' },
+    ],
+    AttributeDefinitions: [
+      { AttributeName: 'pk', AttributeType: 'S' },
+      { AttributeName: 'sk', AttributeType: 'S' },
+    ],
+    ProvisionedThroughput: {
+      ReadCapacityUnits: 5, WriteCapacityUnits: 5,
+    },
+  });
+
+  await client.send(cmd);
 });
 
 describe('function `insertObj`', () => {
@@ -167,6 +190,12 @@ describe('function `buildPutTransactionWriteItem`', () => {
       },
     });
   });
+});
+
+afterEach(async () => {
+  const cmd = new DeleteTableCommand({ TableName: 'default' });
+
+  await client.send(cmd);
 });
 
 afterAll(() => {
