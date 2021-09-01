@@ -2,6 +2,7 @@ import {
   CreateTableCommand,
   DeleteTableCommand,
   DynamoDBClient,
+  QueryCommand,
 } from '@aws-sdk/client-dynamodb';
 import { ulid } from 'ulid';
 import * as connection from '../connection';
@@ -130,6 +131,79 @@ describe('function `insertObj`', () => {
           },
           TableName: 'default',
         },
+      },
+    ]);
+  });
+});
+
+describe('function `commitWriteTransaction`', () => {
+  it('should write the data into DynamoDB', async () => {
+    const obj1 = new MockObj();
+    obj1.meta = { name: 'obj1', rank: 1 };
+    obj1.row1 = { subObj: { prop1: [-1.0387, 0.00001, 1.357] } };
+
+    const obj2 = new MockObj();
+    obj2.meta = { name: 'obj2' };
+    obj2.collection = new Map([
+      ['1', { collectionId: '1', sampleSet: [-1, 0, 1] }],
+      ['2', { collectionId: '2', sampleSet: [0, -2, 1000] }],
+    ]);
+
+    expect(() => { driver.insertObj(obj1); }).not.toThrow();
+    expect(() => { driver.insertObj(obj2); }).not.toThrow();
+    await expect(driver.commitWriteTransaction()).resolves.not.toThrow();
+
+    const obj1Results = await client.send(new QueryCommand({
+      TableName: 'default',
+      KeyConditionExpression: 'pk = :value',
+      ExpressionAttributeValues: {
+        ':value': { S: `MockObj#${obj1.objectId}` },
+      },
+    }));
+
+    expect(obj1Results.Count).toBe(2);
+    expect(obj1Results.ScannedCount).toBe(2);
+    expect(obj1Results.Items).toEqual([
+      {
+        pk: { S: `MockObj#${obj1.objectId}` },
+        sk: { S: 'meta' },
+        name: { S: 'obj1' },
+        rank: { N: '1' },
+      },
+      {
+        pk: { S: `MockObj#${obj1.objectId}` },
+        sk: { S: 'row1' },
+        subObj: { M: { prop1: { SS: ['-1.0387', '0.00001', '1.357'] } } },
+      },
+    ]);
+
+    const obj2Results = await client.send(new QueryCommand({
+      TableName: 'default',
+      KeyConditionExpression: 'pk = :value',
+      ExpressionAttributeValues: {
+        ':value': { S: `MockObj#${obj2.objectId}` },
+      },
+    }));
+
+    expect(obj2Results.Count).toBe(3);
+    expect(obj2Results.ScannedCount).toBe(3);
+    expect(obj2Results.Items).toEqual([
+      {
+        pk: { S: `MockObj#${obj2.objectId}` },
+        sk: { S: 'collection#1' },
+        collectionId: { S: '1' },
+        sampleSet: { NS: ['-1', '0', '1'] },
+      },
+      {
+        pk: { S: `MockObj#${obj2.objectId}` },
+        sk: { S: 'collection#2' },
+        collectionId: { S: '2' },
+        sampleSet: { NS: ['-2', '0', '1000'] },
+      },
+      {
+        pk: { S: `MockObj#${obj2.objectId}` },
+        sk: { S: 'meta' },
+        name: { S: 'obj2' },
       },
     ]);
   });
