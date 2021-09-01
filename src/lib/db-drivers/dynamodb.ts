@@ -12,7 +12,7 @@ import { InvalidSchemaError, SchemaNotMatchError } from '../errors';
 import type { Obj } from '../object';
 import type { Attr } from '../schema';
 import { DBDriver } from './driver';
-import { MaxWriteActionExceededException } from './errors';
+import { MaxWriteActionExceededError } from './errors';
 
 /**
  * Class extending abstract class {@link DBDriver} for all database actions
@@ -131,7 +131,7 @@ class DynamoDBDriver extends DBDriver {
    */
   async commitWriteTransaction(): Promise<void> {
     if (this.transactWriteItems.length > 25) {
-      throw new MaxWriteActionExceededException(
+      throw new MaxWriteActionExceededError(
         this.transactWriteItems.length, 25,
       );
     }

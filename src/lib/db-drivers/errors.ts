@@ -3,15 +3,15 @@
  * actions in a single transaction.
  * @public
  */
-class MaxWriteActionExceededException extends Error {
+class MaxWriteActionExceededError extends Error {
   constructor(actions: number, maxAllowed: number) {
     const message = `${actions} actions included in the transaction. `
       + `The maximum allowed actions in a single transaction is ${maxAllowed}.`;
 
     super(message);
 
-    Object.setPrototypeOf(this, MaxWriteActionExceededException.prototype);
+    Object.setPrototypeOf(this, MaxWriteActionExceededError.prototype);
   }
 }
 
-export { MaxWriteActionExceededException };
+export { MaxWriteActionExceededError };
