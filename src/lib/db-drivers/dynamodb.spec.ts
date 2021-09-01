@@ -10,6 +10,7 @@ import { Obj } from '../object';
 import { TyODM } from '../odm';
 import { Schema } from '../schema';
 import { DynamoDBDriver } from './dynamodb';
+import { MaxWriteActionExceededError } from './errors';
 
 class MockObj extends Obj {
   static SCHEMA: Schema = {
@@ -206,6 +207,29 @@ describe('function `commitWriteTransaction`', () => {
         name: { S: 'obj2' },
       },
     ]);
+  });
+
+  it('should throw `MaxWriteActionExceededError`', async () => {
+    const obj = new MockObj();
+    obj.meta = { name: 'obj', rank: 1 };
+    obj.row1 = { subObj: { prop1: [-1, 0, 1] } };
+    obj.collection = new Map((() => {
+      const result: Array<[
+        string, { collectionId: string, sampleSet: number[] },
+      ]> = [];
+
+      for (let i = 0; i < 25; i += 1) {
+        result.push(
+          [i.toString(), { collectionId: i.toString(), sampleSet: [0] }],
+        );
+      }
+
+      return result;
+    })());
+
+    expect(() => { driver.insertObj(obj); }).not.toThrow();
+    await expect(driver.commitWriteTransaction())
+      .rejects.toThrow(MaxWriteActionExceededError);
   });
 });
 
