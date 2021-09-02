@@ -7,28 +7,27 @@
  * Error to indicate an action is not being supported yet.
  * @public
  */
-class ActionNotSupportedException extends Error {
+export class ActionNotSupportedError extends Error {
   constructor(action: string) {
     const msg = `Action \`${action}\` is not yet supported`;
 
     super(msg);
 
-    Object.setPrototypeOf(this, ActionNotSupportedException.prototype);
+    Object.setPrototypeOf(this, ActionNotSupportedError.prototype);
   }
 }
 
 /**
  * @internal
  */
-class MaxListenerExceededException extends Error {
+export class MaxListenerExceededError extends Error {
   constructor(event: string) {
     const msg = 'Number of listeners exceeded the maximum listeners allowed '
       + `for event ${event}`;
 
     super(msg);
 
-    Object.setPrototypeOf(this, MaxListenerExceededException.prototype);
+    Object.setPrototypeOf(this, MaxListenerExceededError.prototype);
   }
 }
 
-export { ActionNotSupportedException, MaxListenerExceededException };

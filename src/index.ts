@@ -6,4 +6,4 @@ export * from './lib/object';
 export * from './lib/results';
 export * from './lib/schema';
 export * from './lib/odm';
-export { ActionNotSupportedException } from './lib/events/errors';
+export { ActionNotSupportedError } from './lib/events/errors';

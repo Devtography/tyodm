@@ -29,7 +29,7 @@ function onNewObjEvent<T extends Obj>(
   listener: (obj: Obj, Type: { new(): T }) => void,
 ): void {
   if (emitter.listenerCount(Event.NewObj) > 0) {
-    throw new errors.MaxListenerExceededException(Event.NewObj);
+    throw new errors.MaxListenerExceededError(Event.NewObj);
   }
 
   emitter.on(Event.NewObj, listener);

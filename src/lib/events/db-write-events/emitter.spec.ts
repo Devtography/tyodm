@@ -54,7 +54,7 @@ describe('`NewObj` event', () => {
       emitter.onNewObjEvent((_obj, _Type) => { });
 
       expect(() => { emitter.onNewObjEvent((_obj) => { }); })
-        .toThrow(errors.MaxListenerExceededException);
+        .toThrow(errors.MaxListenerExceededError);
     });
   });
 });
