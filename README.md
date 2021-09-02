@@ -20,7 +20,7 @@ class SampleModel extends odm.Obj {
         type: 'single',
         attr: {
           name: 'string',
-          desc: { type: 'string', optional: true },
+          desc: 'string?',
           active: 'bool',
           extra: { someNumber: 'double' },
         },

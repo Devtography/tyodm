@@ -3,7 +3,7 @@
  * custom error types by extending `Error`.
  */
 
-class NotImplementedError extends Error {
+export class NotImplementedError extends Error {
   constructor(func?: string) {
     let msg = func;
 
@@ -14,7 +14,19 @@ class NotImplementedError extends Error {
     }
 
     super(msg);
+
+    Object.setPrototypeOf(this, NotImplementedError.prototype);
   }
 }
 
-export { NotImplementedError };
+/**
+ * Error to indicate the property in question is invalid to the process.
+ * @public
+ */
+export class InvalidPropertyError extends Error {
+  constructor(message?: string) {
+    super(message);
+
+    Object.setPrototypeOf(this, InvalidPropertyError.prototype);
+  }
+}

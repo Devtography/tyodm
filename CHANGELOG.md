@@ -6,6 +6,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+- Supports for sub-object in schema `props` is now limited to 1 level deep.
+  __*(Incompatible with older releases)*__
+
+### Removed
+- `{ type: PropType; optional: boolean; }` syntax for `attr` section of
+  `Schema`. __*(Incompatible with older releases)*__
+
 ## [0.1.0-rc.1] - 2021-08-22
 
 ### Added
