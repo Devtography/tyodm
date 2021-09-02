@@ -1,5 +1,6 @@
 import { NotImplementedError } from '../../utils/errors';
 import type { Obj } from '../object';
+import type { Prop } from '../schema';
 import { DBDriver } from './driver';
 
 /**
@@ -9,6 +10,13 @@ import { DBDriver } from './driver';
 class MongoDBDriver extends DBDriver {
   insertObj<T extends Obj>(_obj: T): void {
     throw new NotImplementedError(this.insertObj.name);
+  }
+
+  insertOne(
+    _pk: string, _elm: Record<string, unknown>,
+    _propName: string, _propLayout: Prop,
+  ): void {
+    throw new NotImplementedError(this.insertOne.name);
   }
 
   async commitWriteTransaction(): Promise<void> {

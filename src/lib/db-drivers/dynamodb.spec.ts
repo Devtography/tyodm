@@ -137,6 +137,30 @@ describe('function `insertObj`', () => {
   });
 });
 
+describe('function `insertOne`', () => {
+  it('should push instance of `TransactWriteItem` to array '
+  + '`transactWriteItems` for data element object passed in', () => {
+    const meta = { name: 'obj meta' };
+
+    expect(() => {
+      driver.insertOne('MockObj#1', meta, 'meta', MockObj.SCHEMA.props.meta);
+    }).not.toThrow();
+    expect(driver.transactWriteItems).toHaveLength(1);
+    expect(driver.transactWriteItems).toEqual([
+      {
+        Put: {
+          Item: {
+            pk: { S: 'MockObj#1' },
+            sk: { S: 'meta' },
+            name: { S: 'obj meta' },
+          },
+          TableName: 'default',
+        },
+      },
+    ]);
+  });
+});
+
 describe('function `commitWriteTransaction`', () => {
   it('should write the data into DynamoDB', async () => {
     const obj1 = new MockObj();

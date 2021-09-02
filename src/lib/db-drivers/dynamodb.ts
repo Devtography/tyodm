@@ -10,7 +10,7 @@ import * as mapper from '../datatype/type-mappers/dynamodb';
 import { PropType } from '../datatype/typings';
 import { InvalidSchemaError, SchemaNotMatchError } from '../errors';
 import type { Obj } from '../object';
-import type { Attr } from '../schema';
+import type { Attr, Prop } from '../schema';
 import { DBDriver } from './driver';
 import { MaxWriteActionExceededError } from './errors';
 
@@ -119,6 +119,46 @@ class DynamoDBDriver extends DBDriver {
           );
       }
     });
+  }
+
+  /**
+   * Prepare the {@link TransactWriteItem} form the data element entry to ready
+   * for the write transaction to be committed to the database.
+   * @param pk - Partition key of the data to write into database.
+   * @param elm - Data element to write.
+   * @param propName - Name of the property the data element belongs to / under.
+   * @param propLayout - Schema of the property / `elm` object.
+   * @throws {@link InvalidSchemaError}
+   * Thrown if` type` of any property is neither `'single'` nor `'collection'`,
+   * or value of `identifier` is missing for type `'collection'`.
+   */
+  insertOne(
+    pk: string, elm: Record<string, unknown>,
+    propName: string, propLayout: Prop,
+  ): void {
+    let sk = '';
+
+    if (propLayout.type === 'single') {
+      sk = propName;
+    } else if (propLayout.type === 'collection') {
+      if (propLayout.identifier === undefined) {
+        throw new InvalidSchemaError(
+          'Value of `identifier` is missing in the schema provided but '
+          + '`type` is set as `\'collection\'`',
+        );
+      }
+
+      sk = `${propName}#${elm[propLayout.identifier] as string}`;
+    } else {
+      throw new InvalidSchemaError(
+        'Invalid property type. `type` of property must be either '
+        + '\'single\' or \'collection\'',
+      );
+    }
+
+    this.transactWriteItems.push(
+      this.buildPutTransactWriteItem(pk, sk, elm, propLayout.attr),
+    );
   }
 
   /**
