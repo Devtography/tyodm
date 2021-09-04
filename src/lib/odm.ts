@@ -196,7 +196,8 @@ class TyODM {
   private attachToDynamoDB() {
     try {
       const client = connection.attachDynamoDBClient(this);
-      this.dbClient = new db.DynamoDBDriver(client);
+      const { table } = this.config as DynamoDBConfig;
+      this.dbClient = new db.DynamoDBDriver(client, table);
     } catch (err) {
       if (err instanceof connection.NotDynamoDBModeError) {
         throw err;
