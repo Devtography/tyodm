@@ -2,7 +2,10 @@ import {
   CreateTableCommand,
   DeleteTableCommand,
   DynamoDBClient,
+  GetItemCommand,
   QueryCommand,
+  TransactWriteItem,
+  TransactWriteItemsCommand,
 } from '@aws-sdk/client-dynamodb';
 import { ulid } from 'ulid';
 import * as connection from '../connection';
@@ -158,6 +161,28 @@ describe('function `insertOne`', () => {
         },
       },
     ]);
+  });
+});
+
+describe('function `delete`', () => {
+  it('should delete the targeted item from database', async () => {
+    const item: TransactWriteItem = {
+      Put: {
+        Item: { pk: { S: 'item#1' }, sk: { S: 'meta#1' }, name: { S: 'item' } },
+        TableName: 'default',
+      },
+    };
+
+    await client.send(new TransactWriteItemsCommand({ TransactItems: [item] }));
+
+    driver.deleteOne('item#1', 'meta#1');
+    expect(driver.transactWriteItems).toHaveLength(1);
+
+    await driver.commitWriteTransaction();
+    expect((await client.send(new GetItemCommand({
+      TableName: 'default',
+      Key: { pk: { S: 'item#1' }, sk: { S: 'meta#1' } },
+    }))).Item).toBeUndefined();
   });
 });
 

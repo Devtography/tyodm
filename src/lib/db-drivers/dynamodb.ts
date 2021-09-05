@@ -162,6 +162,24 @@ class DynamoDBDriver extends DBDriver {
   }
 
   /**
+   * Prepare the {@link TransactWriteItem} of delete an item action by using the
+   * `pk` & `sk` to ready for the write transaction to be committed to the
+   * database.
+   * @param pk - Partition key of the target item.
+   * @param sk - Sort key of the target item.
+   */
+  deleteOne(pk: string, sk: string): void {
+    const writeItem: TransactWriteItem = {
+      Delete: {
+        Key: { pk: { S: pk }, sk: { S: sk } },
+        TableName: this.table,
+      },
+    };
+
+    this.transactWriteItems.push(writeItem);
+  }
+
+  /**
    * Asynchronous function to commit the write transaction to the target
    * database.
    * @throws {@link MaxWriteActionExceededException}

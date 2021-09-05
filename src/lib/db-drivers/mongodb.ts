@@ -19,6 +19,10 @@ class MongoDBDriver extends DBDriver {
     throw new NotImplementedError(this.insertOne.name);
   }
 
+  deleteOne(_pk: string, _sk: string): void {
+    throw new NotImplementedError(this.deleteOne.name);
+  }
+
   async commitWriteTransaction(): Promise<void> {
     throw new NotImplementedError(this.commitWriteTransaction.name);
   }
