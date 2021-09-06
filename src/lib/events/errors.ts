@@ -30,4 +30,3 @@ export class MaxListenerExceededError extends Error {
     Object.setPrototypeOf(this, MaxListenerExceededError.prototype);
   }
 }
-
