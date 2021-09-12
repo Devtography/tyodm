@@ -10,8 +10,12 @@ import { Schema } from './schema';
 abstract class Obj {
   private readonly objId: string;
 
-  constructor() {
-    this.objId = this.objectSchema().identifier ? '_customId' : ulid();
+  constructor(objId?: string) {
+    if (objId) {
+      this.objId = objId;
+    } else {
+      this.objId = this.objectSchema().identifier ? '_customId' : ulid();
+    }
   }
 
   /**
