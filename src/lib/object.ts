@@ -8,11 +8,17 @@ import { Schema } from './schema';
  * @public
  */
 abstract class Obj {
+  [key: string]: unknown; // to allow assigning `objId` to custom field.
+
   private readonly objId: string;
 
   constructor(objId?: string) {
     if (objId) {
-      this.objId = objId;
+      const { identifier } = this.objectSchema();
+      if (identifier !== undefined) {
+        this.objId = '_customId';
+        this[identifier as keyof Obj] = objId;
+      } else { this.objId = objId; }
     } else {
       this.objId = this.objectSchema().identifier ? '_customId' : ulid();
     }
