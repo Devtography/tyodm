@@ -5,13 +5,14 @@ import { PropType } from '../typings';
  * Casts the value based on its' `PropType` and assigns it to the object
  * property.
  * @param val - Value to cast and assign.
- * @param type - {@link PropType} of `val`.
+* @param type - {@link PropType} of `val`.
  * @param obj - Object to contain the value.
  * @param key - Key of the target object property for value assignment.
  * @internal
  */
 function assignValToObjProp(
-  val: unknown, type: PropType,
+  val: boolean | boolean[] | string | string[] | AttributeValue[],
+  type: PropType,
   obj: Record<string, unknown>, key: string,
 ): void {
   let propType: string = type.toLowerCase();
