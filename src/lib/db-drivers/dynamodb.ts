@@ -327,6 +327,17 @@ class DynamoDBDriver extends DBDriver {
 
     return attrVal as unknown as AttributeValue;
   }
+
+  /**
+   * Support function to filter keys `pk` & `sk` from database items retrieved.
+   */
+  private filterPkSk(val: string): boolean {
+    if (val.toLowerCase() === 'pk' || val.toLowerCase() === 'sk') {
+      return false;
+    }
+
+    return true;
+  }
 }
 
 export { DynamoDBDriver };
