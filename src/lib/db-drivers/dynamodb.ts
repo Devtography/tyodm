@@ -39,7 +39,7 @@ class DynamoDBDriver extends DBDriver {
   /**
    * Retrieve all records of a TyODM object by its' identifier
    * (a.k.a. partition key)
-   * @param pk - Partition key of the target records.
+   * @param objId - Partition key of the target records.
    * @param Type - Type of the target TyODM object.
    * @returns TyODM object filled with associated records, or `undefined` if
    * no relevant record found.
@@ -47,13 +47,13 @@ class DynamoDBDriver extends DBDriver {
    * Thrown if either attribute `pk` or `sk` not found in item(s) retrieved
    * from database.
    */
-  async getObjByKey<T extends Obj>(
-    pk: string, Type: { new(objId: string): T },
+  async getObjById<T extends Obj>(
+    objId: string, Type: { new(objId: string): T },
   ): Promise<T | undefined> {
     const queryCmd: QueryCommandInput = {
       TableName: this.table,
       KeyConditionExpression: 'pk = :value',
-      ExpressionAttributeValues: { ':value': { S: pk } },
+      ExpressionAttributeValues: { ':value': { S: `${Type.name}#${objId}` } },
     };
 
     // Read from database
@@ -82,7 +82,8 @@ class DynamoDBDriver extends DBDriver {
         + 'retrieved item. Cannot extract object identifier.');
     }
 
-    const obj = new Type(items[0].pk.S); // new obj with PK from database
+    // New obj with PK from database
+    const obj = new Type(items[0].pk.S.split('#')[1]);
 
     // Loops the records retrieved from database.
     items.forEach((item) => {
@@ -125,7 +126,8 @@ class DynamoDBDriver extends DBDriver {
             }
 
             mapper.assignValToObjProp(subObj[subKey],
-              propSchema.attr[subKey] as PropType, attr, subKey);
+              (propSchema.attr[key] as Record<string, PropType>)[subKey],
+              attr, subKey);
           }); // end sub-object foreach
         }
       }); // end item object foreach
