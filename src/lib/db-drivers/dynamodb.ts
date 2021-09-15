@@ -2,6 +2,8 @@
 import {
   AttributeValue,
   DynamoDBClient,
+  QueryCommand,
+  QueryCommandInput,
   TransactWriteItem,
   TransactWriteItemsCommand,
 } from '@aws-sdk/client-dynamodb';
@@ -12,7 +14,9 @@ import { InvalidSchemaError, SchemaNotMatchError } from '../errors';
 import type { Obj } from '../object';
 import type { Attr, Prop } from '../schema';
 import { DBDriver } from './driver';
-import { MaxWriteActionExceededError } from './errors';
+import {
+  MaxWriteActionExceededError, NonCompatibleDBRecordError,
+} from './errors';
 
 /**
  * Class extending abstract class {@link DBDriver} for all database actions
@@ -30,6 +34,117 @@ class DynamoDBDriver extends DBDriver {
 
     this.client = client;
     this.table = table;
+  }
+
+  /**
+   * Retrieve all records of a TyODM object by its' identifier
+   * (a.k.a. partition key)
+   * @param pk - Partition key of the target records.
+   * @param Type - Type of the target TyODM object.
+   * @returns TyODM object filled with associated records, or `undefined` if
+   * no relevant record found.
+   * @throws {@link NonCompatibleDBRecordError}
+   * Thrown if either attribute `pk` or `sk` not found in item(s) retrieved
+   * from database.
+   */
+  async getObjByKey<T extends Obj>(
+    pk: string, Type: { new(objId: string): T },
+  ): Promise<T | undefined> {
+    const queryCmd: QueryCommandInput = {
+      TableName: this.table,
+      KeyConditionExpression: 'pk = :value',
+      ExpressionAttributeValues: { ':value': { S: pk } },
+    };
+
+    // Read from database
+    let getResults = await this.client.send(new QueryCommand(queryCmd));
+
+    // No record found in database
+    if (getResults.Count === 0) { return undefined; }
+
+    const items = getResults.Items!; // array of records.
+
+    // Keep requesting records until there's no more.
+    // (Due to 25 unique items limit from DynamoDB)
+    while (getResults.LastEvaluatedKey !== undefined
+      && Object.keys(getResults.LastEvaluatedKey).length !== 0) {
+      queryCmd.ExclusiveStartKey = getResults.LastEvaluatedKey;
+
+      // eslint-disable-next-line no-await-in-loop
+      getResults = await this.client.send(new QueryCommand(queryCmd));
+
+      if (getResults.Count !== 0) { items.push(...getResults.Items!); }
+    }
+
+    // Should have a partition key `pk` in the record.
+    if (items[0].pk.S === undefined) {
+      throw new NonCompatibleDBRecordError('Attribute `pk` not found in '
+        + 'retrieved item. Cannot extract object identifier.');
+    }
+
+    const obj = new Type(items[0].pk.S); // new obj with PK from database
+
+    // Loops the records retrieved from database.
+    items.forEach((item) => {
+      // Should have a sort key `sk` in the record.
+      if (item.sk.S === undefined) {
+        throw new NonCompatibleDBRecordError('Attribute `sk` not found in '
+          + 'retrieved item');
+      }
+
+      const isCollection = item.sk.S.includes('#');
+      const sk = isCollection ? item.sk.S.split('#')[0] : item.sk.S;
+
+      // Skip this item if its' `sk` doesn't exist in the schema.
+      if (!Object.keys(obj.objectSchema().props).includes(sk)) { return; }
+
+      const propSchema = obj.objectSchema().props[sk];
+      const prop: Record<string, unknown> = {};
+
+      // Loops the item object properties.
+      Object.keys(item).filter((key) => this.filterPkSk(key)).forEach((key) => {
+        // Skip this property if it doesn't exist in the schema.
+        if (!Object.keys(propSchema.attr).includes(key)) { return; }
+
+        if (typeof propSchema.attr[key] === 'string') {
+          mapper.assignValToObjProp(item[key],
+            propSchema.attr[key] as PropType, prop, key);
+        } else if (typeof propSchema.attr[key] === 'object') {
+          prop[key] = {};
+          const attr = prop[key] as Record<string, unknown>;
+
+          const subObj = item[key].M;
+          // Skip this object property if its' sub-object is empty.
+          if (subObj === undefined) { return; }
+
+          // Loops the properties of sub-object.
+          Object.keys(subObj).forEach((subKey) => {
+            // Skip this property if it doesn't exist in the schema.
+            if (!Object.keys(propSchema.attr[key]).includes(subKey)) {
+              return;
+            }
+
+            mapper.assignValToObjProp(subObj[subKey],
+              propSchema.attr[subKey] as PropType, attr, subKey);
+          }); // end sub-object foreach
+        }
+      }); // end item object foreach
+
+      // Value assignment to the object initialised.
+      if (isCollection) {
+        if (obj[sk as keyof T] === undefined) {
+          obj[sk as keyof T] = new Map() as T[keyof T];
+        }
+
+        const map = obj[sk as keyof T] as Map<string, Record<string, unknown>>;
+        const identifier = item.sk.S.split('#')[1];
+        map.set(identifier, prop);
+      } else {
+        obj[sk as keyof T] = prop as T[keyof T];
+      }
+    }); // end records foreach
+
+    return obj;
   }
 
   // #region Implement functions from DBDriver
