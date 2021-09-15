@@ -17,7 +17,7 @@ abstract class Obj {
       const { identifier } = this.objectSchema();
       if (identifier !== undefined) {
         this.objId = '_customId';
-        this[identifier as keyof Obj] = objId;
+        // It's then user's responsibility to assign ID to custom field.
       } else { this.objId = objId; }
     } else {
       this.objId = this.objectSchema().identifier ? '_customId' : ulid();
