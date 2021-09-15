@@ -6,6 +6,7 @@
   "types": "dist/index.d.ts",
   "scripts": {
     "build": "rimraf dist && tsc",
+    "jest": "AWS_ACCESS_KEY_ID=fakeKeyId AWS_SECRET_ACCESS_KEY=fakeSecretAccessKey jest --detectOpenHandles --verbose",
     "test": "jest --detectOpenHandles --coverage --verbose --setupFiles dotenv/config",
     "watch-test": "npm run test -- --watchAll",
     "next-rc": "npm --no-git-tag-version version prerelease --preid=rc",

@@ -30,10 +30,16 @@ class MockObj extends Obj {
     },
   };
 
-  ulid = ulid();
+  ulid: string;
   meta?: { name: string, rank?: number };
   row1?: { subObj: { prop1: number[] } };
   collection?: Map<string, { collectionId: string, sampleSet: number[] }>;
+
+  constructor(objId?: string) {
+    super(objId);
+
+    this.ulid = objId || ulid();
+  }
 
   objectSchema(): Schema { return MockObj.SCHEMA; }
 }
@@ -76,6 +82,30 @@ beforeEach(async () => {
   });
 
   await client.send(cmd);
+});
+
+describe('function `getObjByKey`', () => {
+  const ulid1 = ulid();
+  const ulid2 = ulid();
+  const obj = new MockObj();
+
+  beforeEach(async () => {
+    obj.meta = { name: 'mocker' };
+    obj.row1 = { subObj: { prop1: [1, 2, 3] } };
+    obj.collection = new Map([
+      [ulid1, { collectionId: ulid1, sampleSet: [1, 3, 5, 7] }],
+      [ulid2, { collectionId: ulid2, sampleSet: [2, 4, 6, 8] }],
+    ]);
+
+    driver.insertObj(obj);
+    await driver.commitWriteTransaction();
+  });
+
+  it('should return the TyODM object based on data retrieve from database',
+    async () => {
+      await expect(driver.getObjById(obj.objectId, MockObj))
+        .resolves.toEqual(obj);
+    });
 });
 
 describe('function `insertObj`', () => {

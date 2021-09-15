@@ -7,6 +7,20 @@ import type { Prop } from '../schema';
  */
 abstract class DBDriver {
   /**
+   * Retrieve all records of a TyODM object by it's identifier.
+   * @param objId - Unique identifier of the target object.
+   * @param Type - Type of the target TyODM object.
+   * @returns TyODM object filled with associated records, or `undefined` if
+   * no relevant record found.
+   * @throws `NonCompatibleDBRecordError`
+   * Thrown if the database record(s) retrieve is/are not in compatible format
+   * to TyODM.
+   */
+  abstract getObjById<T extends Obj>(
+    objId: string, Type: { new(objId: string): T },
+  ): Promise<T | undefined>;
+
+  /**
    * Process the entire TyODM object to prepare the data for being write into
    * the targeted database.
    * @param obj - TyODM data object to insert ot the database.
