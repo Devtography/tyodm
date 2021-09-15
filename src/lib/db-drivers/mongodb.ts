@@ -8,6 +8,12 @@ import { DBDriver } from './driver';
  * @internal
  */
 class MongoDBDriver extends DBDriver {
+  async getObjById<T extends Obj>(
+    _objId: string, _Type: { new(objId: string): T },
+  ): Promise<T | undefined> {
+    throw new NotImplementedError(this.getObjById.name);
+  }
+
   insertObj<T extends Obj>(_obj: T): void {
     throw new NotImplementedError(this.insertObj.name);
   }

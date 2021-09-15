@@ -36,6 +36,7 @@ class DynamoDBDriver extends DBDriver {
     this.table = table;
   }
 
+  // #region Implement functions from DBDriver
   /**
    * Retrieve all records of a TyODM object by its' identifier
    * (a.k.a. partition key)
@@ -149,7 +150,6 @@ class DynamoDBDriver extends DBDriver {
     return obj;
   }
 
-  // #region Implement functions from DBDriver
   /**
    * Processes the entire TyODM object to a collection of
    * {@link TransactWriteItem} to prepare the data for being write into the
