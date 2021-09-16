@@ -25,6 +25,14 @@ class MongoDBDriver extends DBDriver {
     throw new NotImplementedError(this.insertOne.name);
   }
 
+  update(
+    _pk: string, _sk: string,
+    _val: Record<string, unknown>,
+    _propSchema: Prop,
+  ): void {
+    throw new NotImplementedError(this.update.name);
+  }
+
   deleteOne(_pk: string, _sk: string): void {
     throw new NotImplementedError(this.deleteOne.name);
   }

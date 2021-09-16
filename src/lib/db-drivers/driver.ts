@@ -55,6 +55,21 @@ abstract class DBDriver {
   ): void;
 
   /**
+   * Prepare the data from data passed in to ready for the write transaction
+   * of update action to be committed to the database.
+   * @param pk - Partition key of the target record.
+   * @param sk - Sort key of the target record.
+   * @param val - new value(s) to assign to the target record.
+   * @param propSchema - Schema of the property to be updated.
+   * @virtual
+   */
+  abstract update(
+    pk: string, sk: string,
+    val: Record<string, unknown>,
+    propSchema: Prop,
+  ): void;
+
+  /**
    * Prepare the delete action by using the `pk` & `sk` to ready for the write
    * transaction to be committed to the database.
    * @param pk - Partition key of the target item.

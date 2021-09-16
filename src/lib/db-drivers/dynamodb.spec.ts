@@ -20,7 +20,7 @@ class MockObj extends Obj {
     name: 'MockObj',
     identifier: 'ulid',
     props: {
-      meta: { type: 'single', attr: { name: 'string', rank: 'int?' } },
+      meta: { type: 'single', attr: { objName: 'string', objRank: 'int?' } },
       row1: { type: 'single', attr: { subObj: { prop1: 'decimal[]' } } },
       collection: {
         type: 'collection',
@@ -31,7 +31,7 @@ class MockObj extends Obj {
   };
 
   ulid: string;
-  meta?: { name: string, rank?: number };
+  meta?: { objName: string, objRank?: number };
   row1?: { subObj: { prop1: number[] } };
   collection?: Map<string, { collectionId: string, sampleSet: number[] }>;
 
@@ -90,7 +90,7 @@ describe('function `getObjByKey`', () => {
   const obj = new MockObj();
 
   beforeEach(async () => {
-    obj.meta = { name: 'mocker' };
+    obj.meta = { objName: 'mocker' };
     obj.row1 = { subObj: { prop1: [1, 2, 3] } };
     obj.collection = new Map([
       [ulid1, { collectionId: ulid1, sampleSet: [1, 3, 5, 7] }],
@@ -115,7 +115,7 @@ describe('function `insertObj`', () => {
     const ulid2 = ulid();
 
     const obj = new MockObj();
-    obj.meta = { name: 'mocker' };
+    obj.meta = { objName: 'mocker' };
     obj.row1 = { subObj: { prop1: [1, 2, 3] } };
     obj.collection = new Map([
       [ulid1, { collectionId: ulid1, sampleSet: [1, 3, 5, 7] }],
@@ -129,7 +129,7 @@ describe('function `insertObj`', () => {
           Item: {
             pk: { S: `MockObj#${obj.objectId}` },
             sk: { S: 'meta' },
-            name: { S: 'mocker' },
+            objName: { S: 'mocker' },
           },
           TableName: 'default',
         },
@@ -173,7 +173,7 @@ describe('function `insertObj`', () => {
 describe('function `insertOne`', () => {
   it('should push instance of `TransactWriteItem` to array '
   + '`transactWriteItems` for data element object passed in', () => {
-    const meta = { name: 'obj meta' };
+    const meta = { objName: 'obj meta' };
 
     expect(() => {
       driver.insertOne('MockObj#1', meta, 'meta', MockObj.SCHEMA.props.meta);
@@ -185,12 +185,89 @@ describe('function `insertOne`', () => {
           Item: {
             pk: { S: 'MockObj#1' },
             sk: { S: 'meta' },
-            name: { S: 'obj meta' },
+            objName: { S: 'obj meta' },
           },
           TableName: 'default',
         },
       },
     ]);
+  });
+});
+
+describe('function `update`', () => {
+  it('should push an object of `TransactWriteItem` with `Delete` property '
+  + 'to array `transactWriteItems` for values passed in', () => {
+    driver.update('MockObj#1', 'meta', { objName: 'mock_name', objRank: 1 },
+      MockObj.SCHEMA.props.meta);
+    expect(driver.transactWriteItems).toHaveLength(1);
+    expect(driver.transactWriteItems[0]).toEqual(
+      {
+        Update: {
+          Key: { pk: { S: 'MockObj#1' }, sk: { S: 'meta' } },
+          UpdateExpression: 'set objName=:objName, objRank=:objRank',
+          ExpressionAttributeValues: {
+            ':objName': { S: 'mock_name' },
+            ':objRank': { N: '1' },
+          },
+          TableName: 'default',
+        },
+      },
+    );
+    driver.update('MockObj#1', 'row1', { subObj: { prop1: [1, 2, 3] } },
+      MockObj.SCHEMA.props.row1);
+    expect(driver.transactWriteItems).toHaveLength(2);
+    expect(driver.transactWriteItems[1]).toEqual(
+      {
+        Update: {
+          Key: { pk: { S: 'MockObj#1' }, sk: { S: 'row1' } },
+          UpdateExpression: 'set subObj.prop1=:subObj_prop1',
+          ExpressionAttributeValues: {
+            ':subObj_prop1': { SS: ['1', '2', '3'] },
+          },
+          TableName: 'default',
+        },
+      },
+    );
+  });
+
+  it('should update the records in database as specified', async () => {
+    const obj = new MockObj();
+    obj.meta = { objName: 'mock' };
+    obj.row1 = { subObj: { prop1: [1, 2] } };
+
+    driver.insertObj(obj);
+    await driver.commitWriteTransaction();
+
+    driver.update(`${MockObj.name}#${obj.objectId}`, 'meta',
+      { objName: 'mock_name', objRank: 1 }, MockObj.SCHEMA.props.meta);
+    driver.update(`${MockObj.name}#${obj.objectId}`, 'row1',
+      { subObj: { prop1: [1, 2, 3] } }, MockObj.SCHEMA.props.row1);
+
+    await driver.commitWriteTransaction();
+
+    const results = await client.send(new QueryCommand({
+      TableName: 'default',
+      KeyConditionExpression: 'pk = :value',
+      ExpressionAttributeValues: {
+        ':value': { S: `MockObj#${obj.objectId}` },
+      },
+    }));
+
+    expect(results.Count).toEqual(2);
+    expect(results.Items).toEqual([
+      {
+        pk: { S: `${MockObj.name}#${obj.objectId}` },
+        sk: { S: 'meta' },
+        objName: { S: 'mock_name' },
+        objRank: { N: '1' },
+      },
+      {
+        pk: { S: `${MockObj.name}#${obj.objectId}` },
+        sk: { S: 'row1' },
+        subObj: { M: { prop1: { SS: ['1', '2', '3'] } } },
+      },
+    ]);
+    expect(1).toEqual(1);
   });
 });
 
@@ -219,11 +296,11 @@ describe('function `delete`', () => {
 describe('function `commitWriteTransaction`', () => {
   it('should write the data into DynamoDB', async () => {
     const obj1 = new MockObj();
-    obj1.meta = { name: 'obj1', rank: 1 };
+    obj1.meta = { objName: 'obj1', objRank: 1 };
     obj1.row1 = { subObj: { prop1: [-1.0387, 0.00001, 1.357] } };
 
     const obj2 = new MockObj();
-    obj2.meta = { name: 'obj2' };
+    obj2.meta = { objName: 'obj2' };
     obj2.collection = new Map([
       ['1', { collectionId: '1', sampleSet: [-1, 0, 1] }],
       ['2', { collectionId: '2', sampleSet: [0, -2, 1000] }],
@@ -247,8 +324,8 @@ describe('function `commitWriteTransaction`', () => {
       {
         pk: { S: `MockObj#${obj1.objectId}` },
         sk: { S: 'meta' },
-        name: { S: 'obj1' },
-        rank: { N: '1' },
+        objName: { S: 'obj1' },
+        objRank: { N: '1' },
       },
       {
         pk: { S: `MockObj#${obj1.objectId}` },
@@ -283,14 +360,14 @@ describe('function `commitWriteTransaction`', () => {
       {
         pk: { S: `MockObj#${obj2.objectId}` },
         sk: { S: 'meta' },
-        name: { S: 'obj2' },
+        objName: { S: 'obj2' },
       },
     ]);
   });
 
   it('should throw `MaxWriteActionExceededError`', async () => {
     const obj = new MockObj();
-    obj.meta = { name: 'obj', rank: 1 };
+    obj.meta = { objName: 'obj', objRank: 1 };
     obj.row1 = { subObj: { prop1: [-1, 0, 1] } };
     obj.collection = new Map((() => {
       const result: Array<[
@@ -315,7 +392,7 @@ describe('function `commitWriteTransaction`', () => {
 describe('function `cancelTransaction`', () => {
   it('should reset the array `transactWriteItems`', () => {
     const obj = new MockObj();
-    obj.meta = { name: 'mocker' };
+    obj.meta = { objName: 'mocker' };
 
     driver.insertObj(obj);
     driver.cancelWriteTransaction();
@@ -327,7 +404,7 @@ describe('function `cancelTransaction`', () => {
 describe('function `buildPutTransactionWriteItem`', () => {
   it('should return `TransactWriteItem` for object passed in', () => {
     const obj = new MockObj();
-    obj.meta = { name: 'sampleObj', rank: 1 };
+    obj.meta = { objName: 'sampleObj', objRank: 1 };
 
     const item = driver.buildPutTransactWriteItem(
       `${MockObj.name}#${obj.objectId}`, 'meta',
@@ -339,8 +416,8 @@ describe('function `buildPutTransactionWriteItem`', () => {
         Item: {
           pk: { S: `MockObj#${obj.ulid}` },
           sk: { S: 'meta' },
-          name: { S: 'sampleObj' },
-          rank: { N: '1' },
+          objName: { S: 'sampleObj' },
+          objRank: { N: '1' },
         },
         TableName: 'default',
       },

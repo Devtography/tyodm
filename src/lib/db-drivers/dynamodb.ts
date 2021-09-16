@@ -279,6 +279,60 @@ class DynamoDBDriver extends DBDriver {
   }
 
   /**
+   * Prepare the {@link TransactWriteItem} form the data passed in to ready for
+   * the write transaction to be committed to the database.
+   * @param pk - Partition key of the target record.
+   * @param sk - Sort key of the target record.
+   * @param val - New value(s) to assign to the target record.
+   * @param propSchema - Schema of the property to be updated.
+   */
+  update(
+    pk: string, sk: string,
+    val: Record<string, unknown>,
+    propSchema: Prop,
+  ): void {
+    const writeItem: TransactWriteItem = {
+      Update: {
+        Key: { pk: { S: pk }, sk: { S: sk } },
+        UpdateExpression: '',
+        ExpressionAttributeValues: {},
+        TableName: this.table,
+      },
+    };
+
+    const expAttrValues = writeItem.Update!.ExpressionAttributeValues!;
+    let expression = 'set';
+
+    Object.keys(val).forEach((key) => {
+      if (!Object.keys(propSchema.attr).includes(key)) {
+        return; // skip this item if doesn't exist in schema
+      }
+
+      if (typeof propSchema.attr[key] === 'string') {
+        expression += ` ${key}=:${key},`;
+
+        expAttrValues[`:${key}`] = this.buildAttributeValue(
+          val[key], propSchema.attr[key] as PropType,
+        );
+      } else if (typeof propSchema.attr[key] === 'object') {
+        Object.keys(val[key] as Record<string, unknown>).forEach((subKey) => {
+          expression += ` ${key}.${subKey}=:${key}_${subKey},`;
+
+          expAttrValues[`:${key}_${subKey}`] = this.buildAttributeValue(
+            (val[key] as Record<string, unknown>)[subKey],
+            (propSchema.attr[key] as Record<string, PropType>)[subKey],
+          );
+        });
+      }
+    });
+
+    if (expression.slice(-1) === ',') { expression = expression.slice(0, -1); }
+    writeItem.Update!.UpdateExpression = expression;
+
+    this.transactWriteItems.push(writeItem);
+  }
+
+  /**
    * Prepare the {@link TransactWriteItem} of delete an item action by using the
    * `pk` & `sk` to ready for the write transaction to be committed to the
    * database.
