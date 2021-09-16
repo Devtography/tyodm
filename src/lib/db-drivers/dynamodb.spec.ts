@@ -220,14 +220,54 @@ describe('function `update`', () => {
       {
         Update: {
           Key: { pk: { S: 'MockObj#1' }, sk: { S: 'row1' } },
-          UpdateExpression: 'set subObj.prop1=:subObj#prop1',
+          UpdateExpression: 'set subObj.prop1=:subObj_prop1',
           ExpressionAttributeValues: {
-            ':subObj#prop1': { SS: ['1', '2', '3'] },
+            ':subObj_prop1': { SS: ['1', '2', '3'] },
           },
           TableName: 'default',
         },
       },
     );
+  });
+
+  it('should update the records in database as specified', async () => {
+    const obj = new MockObj();
+    obj.meta = { objName: 'mock' };
+    obj.row1 = { subObj: { prop1: [1, 2] } };
+
+    driver.insertObj(obj);
+    await driver.commitWriteTransaction();
+
+    driver.update(`${MockObj.name}#${obj.objectId}`, 'meta',
+      { objName: 'mock_name', objRank: 1 }, MockObj.SCHEMA.props.meta);
+    driver.update(`${MockObj.name}#${obj.objectId}`, 'row1',
+      { subObj: { prop1: [1, 2, 3] } }, MockObj.SCHEMA.props.row1);
+
+    await driver.commitWriteTransaction();
+
+    const results = await client.send(new QueryCommand({
+      TableName: 'default',
+      KeyConditionExpression: 'pk = :value',
+      ExpressionAttributeValues: {
+        ':value': { S: `MockObj#${obj.objectId}` },
+      },
+    }));
+
+    expect(results.Count).toEqual(2);
+    expect(results.Items).toEqual([
+      {
+        pk: { S: `${MockObj.name}#${obj.objectId}` },
+        sk: { S: 'meta' },
+        objName: { S: 'mock_name' },
+        objRank: { N: '1' },
+      },
+      {
+        pk: { S: `${MockObj.name}#${obj.objectId}` },
+        sk: { S: 'row1' },
+        subObj: { M: { prop1: { SS: ['1', '2', '3'] } } },
+      },
+    ]);
+    expect(1).toEqual(1);
   });
 });
 

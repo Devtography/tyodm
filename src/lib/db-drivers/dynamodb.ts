@@ -316,9 +316,9 @@ class DynamoDBDriver extends DBDriver {
         );
       } else if (typeof propSchema.attr[key] === 'object') {
         Object.keys(val[key] as Record<string, unknown>).forEach((subKey) => {
-          expression += ` ${key}.${subKey}=:${key}#${subKey},`;
+          expression += ` ${key}.${subKey}=:${key}_${subKey},`;
 
-          expAttrValues[`:${key}#${subKey}`] = this.buildAttributeValue(
+          expAttrValues[`:${key}_${subKey}`] = this.buildAttributeValue(
             (val[key] as Record<string, unknown>)[subKey],
             (propSchema.attr[key] as Record<string, PropType>)[subKey],
           );
