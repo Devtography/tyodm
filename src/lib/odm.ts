@@ -101,11 +101,13 @@ class TyODM {
    * @returns Collection {@link Results} of {@link Obj} specified.
    * @throws `Error` if data models specified is not part of the schema defined
    * in the config the {@link TyODM} instance initialised with.
+   * @experimental
    */
-  async objects<T extends Obj>(Type: { new(): T }): Promise<Results<T>> {
-    const obj = new Type();
+  async objects<T extends Obj>(_Type: { new(): T }): Promise<Results<T>> {
+    // const obj = new Type();
 
-    return new Results<T>(...[obj]);
+    // return new Results<T>(...[obj]);
+    throw new NotImplementedError(this.objects.name);
   }
 
   /**
@@ -135,12 +137,13 @@ class TyODM {
    * @experimental
    */
   async partialObject<T extends Obj>(
-    Type: { new(): T }, key: string,
-    prop: string | { name: string, key: string },
+    _Type: { new(): T }, _key: string,
+    _prop: string | { name: string, key: string },
   ): Promise<T> {
-    const obj = new Type();
+    // const obj = new Type();
 
-    return obj;
+    // return obj;
+    throw new NotImplementedError(this.partialObject.name);
   }
 
   /**
