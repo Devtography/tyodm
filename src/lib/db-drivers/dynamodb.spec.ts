@@ -194,6 +194,43 @@ describe('function `insertOne`', () => {
   });
 });
 
+describe('function `update`', () => {
+  it('should push an object of `TransactWriteItem` with `Delete` property '
+  + 'to array `transactWriteItems` for values passed in', () => {
+    driver.update('MockObj#1', 'meta', { name: 'mock_name', rank: 1 },
+      MockObj.SCHEMA.props.meta);
+    expect(driver.transactWriteItems).toHaveLength(1);
+    expect(driver.transactWriteItems[0]).toEqual(
+      {
+        Update: {
+          Key: { pk: { S: 'MockObj#1' }, sk: { S: 'meta' } },
+          UpdateExpression: 'set name=:name, rank=:rank',
+          ExpressionAttributeValues: {
+            ':name': { S: 'mock_name' },
+            ':rank': { N: '1' },
+          },
+          TableName: 'default',
+        },
+      },
+    );
+    driver.update('MockObj#1', 'row1', { subObj: { prop1: [1, 2, 3] } },
+      MockObj.SCHEMA.props.row1);
+    expect(driver.transactWriteItems).toHaveLength(2);
+    expect(driver.transactWriteItems[1]).toEqual(
+      {
+        Update: {
+          Key: { pk: { S: 'MockObj#1' }, sk: { S: 'row1' } },
+          UpdateExpression: 'set subObj.prop1=:subObj#prop1',
+          ExpressionAttributeValues: {
+            ':subObj#prop1': { SS: ['1', '2', '3'] },
+          },
+          TableName: 'default',
+        },
+      },
+    );
+  });
+});
+
 describe('function `delete`', () => {
   it('should delete the targeted item from database', async () => {
     const item: TransactWriteItem = {

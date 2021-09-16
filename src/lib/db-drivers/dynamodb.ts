@@ -304,30 +304,24 @@ class DynamoDBDriver extends DBDriver {
     let expression = 'set';
 
     Object.keys(val).forEach((key) => {
-      if (!(key in Object.keys(propSchema.attr))) {
+      if (!Object.keys(propSchema.attr).includes(key)) {
         return; // skip this item if doesn't exist in schema
       }
 
       if (typeof propSchema.attr[key] === 'string') {
         expression += ` ${key}=:${key},`;
 
-        const datatype = mapper.toDBDataType(propSchema.attr[key] as PropType);
-        const attrVal: Record<string, unknown> = {};
-        attrVal[datatype] = val[key];
-
-        expAttrValues[`:${key}`] = attrVal as unknown as AttributeValue;
+        expAttrValues[`:${key}`] = this.buildAttributeValue(
+          val[key], propSchema.attr[key] as PropType,
+        );
       } else if (typeof propSchema.attr[key] === 'object') {
         Object.keys(val[key] as Record<string, unknown>).forEach((subKey) => {
           expression += ` ${key}.${subKey}=:${key}#${subKey},`;
 
-          const datatype = mapper.toDBDataType(
+          expAttrValues[`:${key}#${subKey}`] = this.buildAttributeValue(
+            (val[key] as Record<string, unknown>)[subKey],
             (propSchema.attr[key] as Record<string, PropType>)[subKey],
           );
-          const attrVal: Record<string, unknown> = {};
-          attrVal[datatype] = (val[key] as Record<string, unknown>)[subKey];
-
-          expAttrValues[`:${key}#${subKey}`] = attrVal as
-            unknown as AttributeValue;
         });
       }
     });
