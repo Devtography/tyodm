@@ -3,6 +3,7 @@ import { DynamoDBConfig, MongoDBConfig } from './config';
 import * as connection from './connection';
 import type { PendingWriteAction } from './datatype/typings';
 import * as db from './db-drivers';
+import { DBClientNotAttachedError } from './errors';
 import * as writeEvents from './events/db-write-events';
 import { Obj } from './object';
 import { ODMMode } from './odm-mode';
@@ -101,11 +102,13 @@ class TyODM {
    * @returns Collection {@link Results} of {@link Obj} specified.
    * @throws `Error` if data models specified is not part of the schema defined
    * in the config the {@link TyODM} instance initialised with.
+   * @experimental
    */
-  async objects<T extends Obj>(Type: { new(): T }): Promise<Results<T>> {
-    const obj = new Type();
+  async objects<T extends Obj>(_Type: { new(): T }): Promise<Results<T>> {
+    // const obj = new Type();
 
-    return new Results<T>(...[obj]);
+    // return new Results<T>(...[obj]);
+    throw new NotImplementedError(this.objects.name);
   }
 
   /**
@@ -114,15 +117,18 @@ class TyODM {
    * @param key - Unique identifier of the target object.
    * @see {@link Obj#objectId} for the value of `key`.
    * @returns Instance of {@link Obj} or `undefined` if no object is found.
-   * @Throws `Error` if data models specified is not part of the schema defined
+   * @throws {@link DBClientNotAttachedError}
+   * Thrown if {@link TyODM} instance is not attached to the database
+   * client.
+   * @throws if data models specified is not part of the schema defined
    * in the config the {@link TyODM} instance initialised with.
    */
   async objectByKey<T extends Obj>(
     Type: { new(): T }, key: string,
   ): Promise<T | undefined> {
-    const obj = new Type();
+    if (!this.attached) { throw new DBClientNotAttachedError(); }
 
-    return obj;
+    return this.dbClient?.getObjById(key, Type);
   }
 
   /**
@@ -135,12 +141,13 @@ class TyODM {
    * @experimental
    */
   async partialObject<T extends Obj>(
-    Type: { new(): T }, key: string,
-    prop: string | { name: string, key: string },
+    _Type: { new(): T }, _key: string,
+    _prop: string | { name: string, key: string },
   ): Promise<T> {
-    const obj = new Type();
+    // const obj = new Type();
 
-    return obj;
+    // return obj;
+    throw new NotImplementedError(this.partialObject.name);
   }
 
   /**

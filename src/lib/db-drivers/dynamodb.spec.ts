@@ -8,41 +8,12 @@ import {
   TransactWriteItemsCommand,
 } from '@aws-sdk/client-dynamodb';
 import { ulid } from 'ulid';
+import { MockObj } from '../../test-utils/mock-object';
 import * as connection from '../connection';
-import { Obj } from '../object';
 import { TyODM } from '../odm';
 import { Schema } from '../schema';
 import { DynamoDBDriver } from './dynamodb';
 import { MaxWriteActionExceededError } from './errors';
-
-class MockObj extends Obj {
-  static SCHEMA: Schema = {
-    name: 'MockObj',
-    identifier: 'ulid',
-    props: {
-      meta: { type: 'single', attr: { objName: 'string', objRank: 'int?' } },
-      row1: { type: 'single', attr: { subObj: { prop1: 'decimal[]' } } },
-      collection: {
-        type: 'collection',
-        identifier: 'collectionId',
-        attr: { collectionId: 'string', sampleSet: 'int[]' },
-      },
-    },
-  };
-
-  ulid: string;
-  meta?: { objName: string, objRank?: number };
-  row1?: { subObj: { prop1: number[] } };
-  collection?: Map<string, { collectionId: string, sampleSet: number[] }>;
-
-  constructor(objId?: string) {
-    super(objId);
-
-    this.ulid = objId || ulid();
-  }
-
-  objectSchema(): Schema { return MockObj.SCHEMA; }
-}
 
 let odm: TyODM;
 let client: DynamoDBClient;
