@@ -1,4 +1,5 @@
 import { ulid } from 'ulid';
+import * as writeEvents from './events/db-write-events';
 import { Schema } from './schema';
 
 /**
@@ -43,6 +44,13 @@ abstract class Obj {
     }
 
     return this.objId;
+  }
+
+  /**
+   * Inserts the entire object to database.
+   */
+  insertObj(): void {
+    writeEvents.insertObj(this);
   }
 }
 

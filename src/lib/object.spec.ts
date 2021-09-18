@@ -1,7 +1,27 @@
+import { ulid } from 'ulid';
 import { MockObj } from '../test-utils/mock-object';
+import * as emitter from './events/db-write-events';
+
+const colId1 = ulid();
+const colId2 = ulid();
+
+const obj = new MockObj();
+obj.meta = { objName: 'mock', objRank: 1 };
+obj.row1 = { subObj: { prop1: [1, 2] } };
+obj.collection = new Map([
+  [colId1, { collectionId: colId1, sampleSet: [1, 2] }],
+  [colId2, { collectionId: colId2, sampleSet: [1, 2] }],
+]);
 
 it('should returns the value of identifier specified in schema', () => {
-  const obj = new MockObj();
-
   expect(obj.objectId).toEqual(obj.ulid);
 });
+
+it('should emit an insert object event', () => new Promise((done) => {
+  emitter.onInsertObjEvent((receivedObj) => {
+    expect(receivedObj).toEqual(obj);
+    done(obj);
+  });
+
+  obj.insertObj();
+}));
