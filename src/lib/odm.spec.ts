@@ -2,10 +2,13 @@ import {
   CreateTableCommand,
   DeleteTableCommand,
   DynamoDBClient,
+  TransactWriteItemsCommand,
 } from '@aws-sdk/client-dynamodb';
+import { ulid } from 'ulid';
 import { MockObj } from '../test-utils/mock-object';
 import { DynamoDBConfig } from './config';
 import { attachDynamoDBClient, detachDynamoDBClient } from './connection';
+import { DBClientNotAttachedError } from './errors';
 import { TyODM } from './odm';
 
 const dynamoDBConfig: DynamoDBConfig = {
@@ -42,9 +45,11 @@ describe('function `attach` & `detach`', () => {
 
 describe('functions for data retrieve from database', () => {
   let odm: TyODM;
-
   let directAccessODM: TyODM;
   let client: DynamoDBClient;
+  const objId = ulid();
+  const colId1 = ulid();
+  const colId2 = ulid();
 
   beforeAll(async () => {
     // Setup shared ODM instance.
@@ -117,6 +122,33 @@ describe('functions for data retrieve from database', () => {
         },
       ],
     }));
+  });
+
+  describe('function `objectByKey`', () => {
+    const obj = new MockObj(objId);
+    obj.meta = { objName: 'mock', objRank: 1 };
+    obj.row1 = { subObj: { prop1: [1, 2] } };
+    obj.collection = new Map([
+      [colId1, { collectionId: colId1, sampleSet: [1, 2] }],
+      [colId2, { collectionId: colId2, sampleSet: [1, 2] }],
+    ]);
+
+    it('should return the expected `Obj` instance', async () => {
+      await expect(odm.objectByKey(MockObj, objId)).resolves
+        .not.toBeUndefined();
+      await expect(odm.objectByKey(MockObj, objId)).resolves.toEqual(obj);
+    });
+
+    it('should return `undefined`', async () => {
+      await expect(odm.objectByKey(MockObj, '1')).resolves.toBeUndefined();
+    });
+
+    it('should throw a `DBClientNotAttachedError`', async () => {
+      await odm.detach();
+
+      await expect(odm.objectByKey(MockObj, objId)).rejects
+        .toThrow(DBClientNotAttachedError);
+    });
   });
 
   afterAll(async () => {
