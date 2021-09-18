@@ -157,9 +157,12 @@ class TyODM {
    *
    * Nested transactions (calling `write()` within `write()`) is not possible.
    * @param callback - function of transaction details.
+   * @throws {@link DBClientNotAttachedError}
+   * Thrown if {@link TyODM} instance is not attached to the database client.
    * @throws `Error` if exception happens when committing the transaction.
    */
   async write(callback: () => void): Promise<void> {
+    if (!this.attached) { throw new DBClientNotAttachedError(); }
     this.beginTransaction();
 
     try {
@@ -182,13 +185,12 @@ class TyODM {
   }
 
   private async commitTransaction(): Promise<void> {
-    // Read the queue/map and form the transactional write action
-    // based on items stored in the queue/map.
-    return Promise.resolve();
+    return this.dbClient?.commitWriteTransaction();
   }
 
   private cancelTransaction(): void {
     // Clean the queue/map & unregister the event handler.
+    this.dbClient?.cancelWriteTransaction();
   }
 
   /**

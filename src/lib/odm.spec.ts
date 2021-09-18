@@ -85,10 +85,6 @@ describe('test with DynamoDB', () => {
   });
 
   describe('functions for data retrieve from database', () => {
-    const objId = ulid();
-    const colId1 = ulid();
-    const colId2 = ulid();
-
     beforeAll(async () => {
       // Put records.
       await client.send(new TransactWriteItemsCommand({
@@ -166,6 +162,28 @@ describe('test with DynamoDB', () => {
         await odm.detach();
       });
     });
+
+    describe('function `write`', () => {
+      beforeAll(async () => {
+        await odm.attach();
+      });
+
+      it('should insert a `MockObj` to database', async () => {
+        await expect(odm.write(() => { obj.insertObj(); }))
+          .resolves.not.toThrow();
+        await expect(odm.objectByKey(MockObj, objId)).resolves.toEqual(obj);
+      });
+
+      it('should throw a `DBClientNotAttachedError`', async () => {
+        await odm.detach();
+
+        await expect(odm.write(() => { })).rejects
+          .toThrow(DBClientNotAttachedError);
+      });
+
+      afterAll(async () => {
+        await odm.detach();
+      });
     });
   });
 
