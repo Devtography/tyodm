@@ -1,59 +1,38 @@
 /* eslint-disable jest/no-done-callback */
-import { Obj } from '../../object';
-import { Schema } from '../../schema';
+import { MockObj } from '../../../test-utils/mock-object';
 import * as errors from '../errors';
 import * as emitter from './emitter';
 import { Event } from './events';
-
-class MockObj extends Obj {
-  static SCHEMA: Schema = {
-    name: 'MockObj',
-    props: {
-      meta: {
-        type: 'single',
-        attr: {
-          name: 'string',
-        },
-      },
-    },
-  };
-
-  objectSchema(): Schema {
-    return MockObj.SCHEMA;
-  }
-}
 
 beforeEach(() => {
   emitter.emitter.removeAllListeners();
 });
 
 describe('`NewObj` event', () => {
-  describe('function newObj', () => {
+  describe('function insertObj', () => {
     it('should return `false` when event is not being listened', () => {
-      expect(emitter.newObj(new MockObj(), MockObj)).toBeFalsy();
+      expect(emitter.insertObj(new MockObj())).toBeFalsy();
     });
 
     it('should return `true` when event is handled by a listener', () => {
-      emitter.emitter.on(Event.NewObj, () => { });
+      emitter.emitter.on(Event.InsertObj, () => { });
 
-      expect(emitter.newObj(new MockObj(), MockObj)).toBeTruthy();
+      expect(emitter.insertObj(new MockObj())).toBeTruthy();
     });
   });
 
-  describe('function onNewObjEvent(listener)', () => {
+  describe('function onInsertObjEvent(listener)', () => {
     it('should trigger the listener function on event emitted', (done) => {
-      emitter.onNewObjEvent((_obj, _Type) => {
-        done();
-      });
+      emitter.onInsertObjEvent((_obj) => { done(); });
 
-      expect(emitter.newObj(new MockObj(), MockObj)).toBeTruthy();
+      expect(emitter.insertObj(new MockObj())).toBeTruthy();
     }, 2);
 
     it('should thrown `MaxListenersExceededException` when the event has '
       + 'already been assigned to a listener', () => {
-      emitter.onNewObjEvent((_obj, _Type) => { });
+      emitter.onInsertObjEvent((_obj) => { });
 
-      expect(() => { emitter.onNewObjEvent((_obj) => { }); })
+      expect(() => { emitter.onInsertObjEvent((_obj) => { }); })
         .toThrow(errors.MaxListenerExceededError);
     });
   });

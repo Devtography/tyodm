@@ -2,7 +2,7 @@
  * @internal
  */
 enum Event {
-  NewObj = 'insert new object',
+  InsertObj = 'insert new object',
 }
 
 export { Event };

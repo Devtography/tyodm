@@ -175,13 +175,9 @@ class TyODM {
   }
 
   private beginTransaction(): void {
-    // Start a queue/map ready to save the action.
-    // Register an event handler to understand the underlying operations.
-    writeEvents.onNewObjEvent((obj, ObjType) => {
-      this.dbWriteQueue?.push({
-        event: writeEvents.Event.NewObj,
-        value: { obj, ObjType },
-      });
+    // Register an event handler to handle the underlying operations.
+    writeEvents.onInsertObjEvent((obj) => {
+      this.dbClient?.insertObj(obj);
     });
   }
 
