@@ -43,13 +43,22 @@ describe('function `attach` & `detach`', () => {
     });
 });
 
-describe('functions for data retrieve from database', () => {
+describe('test with DynamoDB', () => {
   let odm: TyODM;
   let directAccessODM: TyODM;
   let client: DynamoDBClient;
+
   const objId = ulid();
   const colId1 = ulid();
   const colId2 = ulid();
+
+  const obj = new MockObj(objId);
+  obj.meta = { objName: 'mock', objRank: 1 };
+  obj.row1 = { subObj: { prop1: [1, 2] } };
+  obj.collection = new Map([
+    [colId1, { collectionId: colId1, sampleSet: [1, 2] }],
+    [colId2, { collectionId: colId2, sampleSet: [1, 2] }],
+  ]);
 
   beforeAll(async () => {
     // Setup shared ODM instance.
@@ -73,81 +82,90 @@ describe('functions for data retrieve from database', () => {
       ],
       ProvisionedThroughput: { ReadCapacityUnits: 5, WriteCapacityUnits: 5 },
     }));
-
-    // Put records.
-    await client.send(new TransactWriteItemsCommand({
-      TransactItems: [
-        {
-          Put: {
-            Item: {
-              pk: { S: `${MockObj.name}#${objId}` },
-              sk: { S: 'meta' },
-              objName: { S: 'mock' },
-              objRank: { N: '1' },
-            },
-            TableName: dynamoDBConfig.table,
-          },
-        },
-        {
-          Put: {
-            Item: {
-              pk: { S: `${MockObj.name}#${objId}` },
-              sk: { S: 'row1' },
-              subObj: { M: { prop1: { SS: ['1', '2'] } } },
-            },
-            TableName: dynamoDBConfig.table,
-          },
-        },
-        {
-          Put: {
-            Item: {
-              pk: { S: `${MockObj.name}#${objId}` },
-              sk: { S: `collection#${colId1}` },
-              collectionId: { S: colId1 },
-              sampleSet: { NS: ['1', '2'] },
-            },
-            TableName: dynamoDBConfig.table,
-          },
-        },
-        {
-          Put: {
-            Item: {
-              pk: { S: `${MockObj.name}#${objId}` },
-              sk: { S: `collection#${colId2}` },
-              collectionId: { S: colId2 },
-              sampleSet: { NS: ['1', '2'] },
-            },
-            TableName: dynamoDBConfig.table,
-          },
-        },
-      ],
-    }));
   });
 
-  describe('function `objectByKey`', () => {
-    const obj = new MockObj(objId);
-    obj.meta = { objName: 'mock', objRank: 1 };
-    obj.row1 = { subObj: { prop1: [1, 2] } };
-    obj.collection = new Map([
-      [colId1, { collectionId: colId1, sampleSet: [1, 2] }],
-      [colId2, { collectionId: colId2, sampleSet: [1, 2] }],
-    ]);
+  describe('functions for data retrieve from database', () => {
+    const objId = ulid();
+    const colId1 = ulid();
+    const colId2 = ulid();
 
-    it('should return the expected `Obj` instance', async () => {
-      await expect(odm.objectByKey(MockObj, objId)).resolves
-        .not.toBeUndefined();
-      await expect(odm.objectByKey(MockObj, objId)).resolves.toEqual(obj);
+    beforeAll(async () => {
+      // Put records.
+      await client.send(new TransactWriteItemsCommand({
+        TransactItems: [
+          {
+            Put: {
+              Item: {
+                pk: { S: `${MockObj.name}#${objId}` },
+                sk: { S: 'meta' },
+                objName: { S: 'mock' },
+                objRank: { N: '1' },
+              },
+              TableName: dynamoDBConfig.table,
+            },
+          },
+          {
+            Put: {
+              Item: {
+                pk: { S: `${MockObj.name}#${objId}` },
+                sk: { S: 'row1' },
+                subObj: { M: { prop1: { SS: ['1', '2'] } } },
+              },
+              TableName: dynamoDBConfig.table,
+            },
+          },
+          {
+            Put: {
+              Item: {
+                pk: { S: `${MockObj.name}#${objId}` },
+                sk: { S: `collection#${colId1}` },
+                collectionId: { S: colId1 },
+                sampleSet: { NS: ['1', '2'] },
+              },
+              TableName: dynamoDBConfig.table,
+            },
+          },
+          {
+            Put: {
+              Item: {
+                pk: { S: `${MockObj.name}#${objId}` },
+                sk: { S: `collection#${colId2}` },
+                collectionId: { S: colId2 },
+                sampleSet: { NS: ['1', '2'] },
+              },
+              TableName: dynamoDBConfig.table,
+            },
+          },
+        ],
+      }));
     });
 
-    it('should return `undefined`', async () => {
-      await expect(odm.objectByKey(MockObj, '1')).resolves.toBeUndefined();
+    describe('function `objectByKey`', () => {
+      beforeAll(async () => {
+        await odm.attach();
+      });
+
+      it('should return the expected `Obj` instance', async () => {
+        await expect(odm.objectByKey(MockObj, objId)).resolves
+          .not.toBeUndefined();
+        await expect(odm.objectByKey(MockObj, objId)).resolves.toEqual(obj);
+      });
+
+      it('should return `undefined`', async () => {
+        await expect(odm.objectByKey(MockObj, '1')).resolves.toBeUndefined();
+      });
+
+      it('should throw a `DBClientNotAttachedError`', async () => {
+        await odm.detach();
+
+        await expect(odm.objectByKey(MockObj, objId)).rejects
+          .toThrow(DBClientNotAttachedError);
+      });
+
+      afterAll(async () => {
+        await odm.detach();
+      });
     });
-
-    it('should throw a `DBClientNotAttachedError`', async () => {
-      await odm.detach();
-
-      await expect(odm.objectByKey(MockObj, objId)).rejects
-        .toThrow(DBClientNotAttachedError);
     });
   });
 
@@ -156,7 +174,5 @@ describe('functions for data retrieve from database', () => {
       TableName: dynamoDBConfig.table,
     }));
     detachDynamoDBClient(directAccessODM);
-
-    await odm.detach();
   });
 });
