@@ -34,3 +34,31 @@ describe('`InsertObj` event', () => {
     });
   });
 });
+
+describe('`InsertOne` event', () => {
+  describe('function `insertOne`', () => {
+    it('should return `false` when event is not being listened', () => {
+      expect(emitter.insertOne(new MockObj(), 'meta', {})).toBeFalsy();
+    });
+
+    it('should return `true` when event is handled by a listener', () => {
+      emitter.emitter.on(Event.InsertOne, () => { });
+      expect(emitter.insertOne(new MockObj(), 'meta', {})).toBeTruthy();
+    });
+  });
+
+  describe('function `onInsertOneEvent', () => {
+    it('should trigger the listener function on event emitted',
+      () => new Promise((done) => {
+        emitter.onInsertOneEvent((obj, _toProp, _val) => { done(obj); });
+        expect(emitter.insertOne(new MockObj(), 'meta', {})).toBeTruthy();
+      }));
+
+    it('should throw `MaxListenerExceededError` when the event has '
+      + 'already been assigned to a listener', () => {
+      emitter.onInsertOneEvent((_obj, _toProp, _val) => { });
+      expect(() => { emitter.onInsertOneEvent((_obj, _toProp, _val) => { }); })
+        .toThrow(errors.MaxListenerExceededError);
+    });
+  });
+});

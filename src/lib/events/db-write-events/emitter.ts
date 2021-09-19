@@ -34,4 +34,35 @@ export function onInsertObjEvent(listener: (obj: Obj) => void): void {
   emitter.on(Event.InsertObj, listener);
 }
 
+/**
+ * Emits an event of a single record insertion.
+ * @param obj - The object to insert the items in `val` to.
+ * @param toProp - Name of the property
+ * @param val - Value(s) to be inserted.
+ * @returns `true` if the event is being listened. `false` if otherwise.
+ * @internal
+ */
+export function insertOne(
+  obj: Obj, toProp: string, val: Record<string, unknown>,
+): boolean {
+  return emitter.emit(Event.InsertOne, obj, toProp, val);
+}
+
+/**
+ * Set the event listener for event {@link Event.InsertOne}.
+ * @param listener - Handler function for the event.
+ * @throws {@link MaxListenerExceededError}
+ * Thrown if the event is already assigned to another listener.
+ * @internal
+ */
+export function onInsertOneEvent(
+  listener: (obj: Obj, toProp: string, val: Record<string, unknown>) => void,
+): void {
+  if (emitter.listenerCount(Event.InsertOne) > 0) {
+    throw new MaxListenerExceededError(Event.InsertOne);
+  }
+
+  emitter.on(Event.InsertOne, listener);
+}
+
 export { emitter };
