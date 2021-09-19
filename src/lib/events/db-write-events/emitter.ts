@@ -1,6 +1,6 @@
 import { EventEmitter } from 'events';
 import type { Obj } from '../../object';
-import * as errors from '../errors';
+import { MaxListenerExceededError } from '../errors';
 import { Event } from './events';
 
 /**
@@ -20,14 +20,15 @@ export function insertObj(obj: Obj): boolean {
 }
 
 /**
- * Set the event listener for event {@link WriteEvent#NewObj}.
+ * Set the event listener for event {@link Events.InsertObj}.
  * @param listener - Handler function for the event.
- * @throws {@link errors#MaxListenerExceededException}
- * Thrown if the event is already being assigned to another listener.
+ * @throws {@link MaxListenerExceededException}
+ * Thrown if the event is already assigned to another listener.
+ * @internal
  */
 export function onInsertObjEvent(listener: (obj: Obj) => void): void {
   if (emitter.listenerCount(Event.InsertObj) > 0) {
-    throw new errors.MaxListenerExceededError(Event.InsertObj);
+    throw new MaxListenerExceededError(Event.InsertObj);
   }
 
   emitter.on(Event.InsertObj, listener);
