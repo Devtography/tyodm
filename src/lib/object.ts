@@ -62,6 +62,18 @@ abstract class Obj {
   insertRecord(toProp: string, val: Record<string, unknown>): void {
     writeEvents.insertOne(this, toProp, val);
   }
+
+  /**
+   * Deletes the target property (or an item in target property if type of
+   * target property is `collection`) of this {@link Obj} instance.
+   * @param targetProp - Name of the target property. Must be one of the keys
+   * defined in `objectSchema().props`.
+   * @param identifier - Identifier of the target record if the property type
+   * of the target property is `collection`.
+   */
+  deleteRecord(targetProp: string, identifier?: string): void {
+    writeEvents.deleteOne(this, targetProp, identifier);
+  }
 }
 
 export { Obj };

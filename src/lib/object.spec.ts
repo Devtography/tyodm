@@ -38,3 +38,14 @@ it('should emit an `InsertOne` event', () => new Promise((done) => {
 
   obj.insertRecord('meta', values);
 }));
+
+it('should emit an `DeleteRecord` event', () => new Promise((done) => {
+  emitter.onDeleteOneEvent((receivedObj, prop, colId) => {
+    expect(receivedObj).toEqual(obj);
+    expect(prop).toEqual('meta');
+    expect(colId).toBeUndefined();
+    done(undefined);
+  });
+
+  obj.deleteRecord('meta');
+}));
