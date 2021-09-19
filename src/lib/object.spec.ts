@@ -25,3 +25,16 @@ it('should emit an insert object event', () => new Promise((done) => {
 
   obj.insertObj();
 }));
+
+it('should emit an `InsertOne` event', () => new Promise((done) => {
+  const values = { objName: 'mocker', objRank: 2 };
+
+  emitter.onInsertOneEvent((receivedObj, toProp, val) => {
+    expect(receivedObj).toEqual(obj);
+    expect(toProp).toEqual('meta');
+    expect(val).toEqual(values);
+    done(obj);
+  });
+
+  obj.insertRecord('meta', values);
+}));

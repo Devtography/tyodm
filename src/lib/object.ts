@@ -52,6 +52,16 @@ abstract class Obj {
   insertObj(): void {
     writeEvents.insertObj(this);
   }
+
+  /**
+   * Inserts a record to the target property of this {@link Obj} instance.
+   * @param toProp - Name of the target property. Must be one of the keys
+   * defined in `objectSchema().props`.
+   * @param val - Value(s) to be inserted.
+   */
+  insertRecord(toProp: string, val: Record<string, unknown>): void {
+    writeEvents.insertOne(this, toProp, val);
+  }
 }
 
 export { Obj };
