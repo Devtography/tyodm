@@ -8,7 +8,7 @@ beforeEach(() => {
   emitter.emitter.removeAllListeners();
 });
 
-describe('`NewObj` event', () => {
+describe('`InsertObj` event', () => {
   describe('function insertObj', () => {
     it('should return `false` when event is not being listened', () => {
       expect(emitter.insertObj(new MockObj())).toBeFalsy();
