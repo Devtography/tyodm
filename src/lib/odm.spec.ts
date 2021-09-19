@@ -1,7 +1,9 @@
+/* eslint-disable @typescript-eslint/no-non-null-assertion */
 import {
   CreateTableCommand,
   DeleteTableCommand,
   DynamoDBClient,
+  GetItemCommand,
   TransactWriteItemsCommand,
 } from '@aws-sdk/client-dynamodb';
 import { ulid } from 'ulid';
@@ -184,6 +186,59 @@ describe('test with DynamoDB', () => {
         await expect(odm.objectByKey(MockObj, obj.objectId))
           .resolves.toEqual(obj);
       });
+    });
+
+    describe('event `InsertOne`', () => {
+      it('should insert record to a `single` type prop in `obj` & database',
+        async () => {
+          await expect(odm.write(() => {
+            obj.insertRecord('meta', { objName: 'mock' });
+          })).resolves.not.toThrow();
+
+          expect(obj.meta).toEqual({ objName: 'mock' });
+
+          const result = await client.send(new GetItemCommand({
+            Key: {
+              pk: { S: `${MockObj.SCHEMA.name}#${obj.objectId}` },
+              sk: { S: 'meta' },
+            },
+            TableName: dynamoDBConfig.table,
+          }));
+
+          expect(result.Item).toEqual({
+            pk: { S: `${MockObj.SCHEMA.name}#${obj.objectId}` },
+            sk: { S: 'meta' },
+            objName: { S: 'mock' },
+          });
+        });
+
+      it('should insert record to a `collection` type prop in `obj` & database',
+        async () => {
+          expect(1).toEqual(1);
+          const colId = ulid();
+
+          await expect(odm.write(() => {
+            obj.insertRecord('collection',
+              { collectionId: colId, sampleSet: [0, 1] });
+          })).resolves.not.toThrow();
+
+          expect(obj.collection!.get(colId)!.sampleSet).toEqual([0, 1]);
+
+          const result = await client.send(new GetItemCommand({
+            Key: {
+              pk: { S: `${MockObj.SCHEMA.name}#${obj.objectId}` },
+              sk: { S: `collection#${colId}` },
+            },
+            TableName: dynamoDBConfig.table,
+          }));
+
+          expect(result.Item).toEqual({
+            pk: { S: `${MockObj.SCHEMA.name}#${obj.objectId}` },
+            sk: { S: `collection#${colId}` },
+            collectionId: { S: colId },
+            sampleSet: { NS: ['0', '1'] },
+          });
+        });
     });
 
     it('should throw a `DBClientNotAttachedError`', async () => {

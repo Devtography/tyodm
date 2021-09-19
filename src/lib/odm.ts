@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-non-null-assertion */
 import { NotImplementedError } from '../utils/errors';
 import { DynamoDBConfig, MongoDBConfig } from './config';
 import * as connection from './connection';
@@ -27,7 +28,7 @@ class TyODM {
   readonly config: DynamoDBConfig | MongoDBConfig;
 
   private dbClient?: db.DBDriver;
-  private dbWriteQueue?: Array<PendingWriteAction>;
+  private dbWriteQueue: Array<PendingWriteAction> = [];
 
   /**
    * {@link TyODM} constructor.
@@ -182,15 +183,26 @@ class TyODM {
     writeEvents.onInsertObjEvent((obj) => {
       this.dbClient?.insertObj(obj);
     });
+
+    writeEvents.onInsertOneEvent((obj, toProp, val) => {
+      this.insertOneEventHandler(obj, toProp, val);
+    });
   }
 
   private async commitTransaction(): Promise<void> {
-    return this.dbClient?.commitWriteTransaction();
+    // return this.dbClient?.commitWriteTransaction();
+    await this.dbClient?.commitWriteTransaction();
+    // Reflects the changes into the corresponding object(s).
+    this.updateObjects();
+
+    this.postCommitTransaction();
   }
 
   private cancelTransaction(): void {
     // Clean the queue/map & unregister the event handler.
     this.dbClient?.cancelWriteTransaction();
+
+    this.postCommitTransaction();
   }
 
   /**
@@ -243,6 +255,52 @@ class TyODM {
     this.dbClient = undefined;
 
     throw new NotImplementedError(this.detachFromDynamoDB.name);
+  }
+
+  private insertOneEventHandler(
+    obj: Obj, toProp: string, val: Record<string, unknown>,
+  ): void {
+    this.dbWriteQueue.push({
+      event: writeEvents.Event.InsertOne,
+      value: { obj, toProp, val },
+    });
+
+    this.dbClient?.insertOne(
+      `${obj.objectSchema().name}#${obj.objectId}`, val, toProp,
+      obj.objectSchema().props[toProp],
+    );
+  }
+
+  private updateObjects(): void {
+    // No schema validation in this function. Relies on functions from
+    // `DBDriver` called in pervious steps.
+    this.dbWriteQueue.forEach((task) => {
+      const { obj } = task.value as writeEvents.actions.Base;
+
+      switch (task.event) {
+        case (writeEvents.Event.InsertOne): {
+          const { toProp, val } = task.value as
+            writeEvents.actions.InsertOne;
+
+          if (obj.objectSchema().props[toProp].type === 'single') {
+            obj[toProp] = val;
+          } else if (obj.objectSchema().props[toProp].type === 'collection') {
+            if (obj[toProp] === undefined) { obj[toProp] = new Map(); }
+            (obj[toProp] as Map<string, unknown>).set(
+              val[obj.objectSchema().props[toProp].identifier!] as string,
+              val,
+            );
+          }
+          break;
+        }
+        default: break;
+      }
+    });
+  }
+
+  private postCommitTransaction(): void {
+    this.dbWriteQueue.length = 0;
+    writeEvents.emitter.removeAllListeners();
   }
 }
 
