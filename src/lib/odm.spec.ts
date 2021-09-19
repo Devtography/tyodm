@@ -20,6 +20,18 @@ const dynamoDBConfig: DynamoDBConfig = {
   ]),
 };
 
+const objId = ulid();
+const colId1 = ulid();
+const colId2 = ulid();
+
+const commonObj = new MockObj(objId);
+commonObj.meta = { objName: 'mock', objRank: 1 };
+commonObj.row1 = { subObj: { prop1: [1, 2] } };
+commonObj.collection = new Map([
+  [colId1, { collectionId: colId1, sampleSet: [1, 2] }],
+  [colId2, { collectionId: colId2, sampleSet: [1, 2] }],
+]);
+
 describe('function `attach` & `detach`', () => {
   it('should return true if ODM instance attached successfully', async () => {
     const odm = new TyODM(dynamoDBConfig);
@@ -47,18 +59,6 @@ describe('test with DynamoDB', () => {
   let odm: TyODM;
   let directAccessODM: TyODM;
   let client: DynamoDBClient;
-
-  const objId = ulid();
-  const colId1 = ulid();
-  const colId2 = ulid();
-
-  const obj = new MockObj(objId);
-  obj.meta = { objName: 'mock', objRank: 1 };
-  obj.row1 = { subObj: { prop1: [1, 2] } };
-  obj.collection = new Map([
-    [colId1, { collectionId: colId1, sampleSet: [1, 2] }],
-    [colId2, { collectionId: colId2, sampleSet: [1, 2] }],
-  ]);
 
   beforeAll(async () => {
     // Setup shared ODM instance.
@@ -142,9 +142,10 @@ describe('test with DynamoDB', () => {
       });
 
       it('should return the expected `Obj` instance', async () => {
-        await expect(odm.objectByKey(MockObj, objId)).resolves
-          .not.toBeUndefined();
-        await expect(odm.objectByKey(MockObj, objId)).resolves.toEqual(obj);
+        await expect(odm.objectByKey(MockObj, objId))
+          .resolves.not.toBeUndefined();
+        await expect(odm.objectByKey(MockObj, objId))
+          .resolves.toEqual(commonObj);
       });
 
       it('should return `undefined`', async () => {
@@ -162,28 +163,38 @@ describe('test with DynamoDB', () => {
         await odm.detach();
       });
     });
+  });
 
-    describe('function `write`', () => {
-      beforeAll(async () => {
-        await odm.attach();
-      });
+  describe('function `write`', () => {
+    const obj = new MockObj();
+    obj.row1 = { subObj: { prop1: [1, 2] } };
+    obj.collection = new Map([
+      [colId1, { collectionId: colId1, sampleSet: [1, 2] }],
+      [colId2, { collectionId: colId2, sampleSet: [1, 2] }],
+    ]);
 
+    beforeAll(async () => {
+      await odm.attach();
+    });
+
+    describe('event `InsertObj`', () => {
       it('should insert a `MockObj` to database', async () => {
         await expect(odm.write(() => { obj.insertObj(); }))
           .resolves.not.toThrow();
-        await expect(odm.objectByKey(MockObj, objId)).resolves.toEqual(obj);
+        await expect(odm.objectByKey(MockObj, obj.objectId))
+          .resolves.toEqual(obj);
       });
+    });
 
-      it('should throw a `DBClientNotAttachedError`', async () => {
-        await odm.detach();
+    it('should throw a `DBClientNotAttachedError`', async () => {
+      await odm.detach();
 
-        await expect(odm.write(() => { })).rejects
-          .toThrow(DBClientNotAttachedError);
-      });
+      await expect(odm.write(() => { })).rejects
+        .toThrow(DBClientNotAttachedError);
+    });
 
-      afterAll(async () => {
-        await odm.detach();
-      });
+    afterAll(async () => {
+      await odm.detach();
     });
   });
 
