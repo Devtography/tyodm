@@ -65,4 +65,29 @@ export function onInsertOneEvent(
   emitter.on(Event.InsertOne, listener);
 }
 
+/**
+ * Emits an event of single record deletion.
+ * @param obj - The object to delete the record from.
+ * @param prop - Name of the target property.
+ * @param colId - Identifier of the record if the target property is a
+ * `collection` type property.
+ * @returns `true` if the event is being listened. `false` if otherwise.
+ * @internal
+ */
+export function deleteOne(
+  obj: Obj, prop: string, colId: string | undefined,
+): boolean {
+  return emitter.emit(Event.DeleteOne, obj, prop, colId);
+}
+
+export function onDeleteOneEvent(
+  listener: (obj: Obj, prop: string, colId: string | undefined) => void,
+): void {
+  if (emitter.listenerCount(Event.DeleteOne) > 0) {
+    throw new MaxListenerExceededError(Event.DeleteOne);
+  }
+
+  emitter.on(Event.DeleteOne, listener);
+}
+
 export { emitter };

@@ -62,3 +62,32 @@ describe('`InsertOne` event', () => {
     });
   });
 });
+
+describe('`DeleteOne` event', () => {
+  describe('function `deleteOne`', () => {
+    it('should return `false` when event is not being listened', () => {
+      expect(emitter.deleteOne(new MockObj(), 'meta', undefined)).toBeFalsy();
+    });
+
+    it('should return `true` when event is handled by a listener', () => {
+      emitter.emitter.on(Event.DeleteOne, () => { });
+      expect(emitter.deleteOne(new MockObj(), 'meta', undefined)).toBeTruthy();
+    });
+  });
+
+  describe('function `onDeleteOneEvent`', () => {
+    it('should trigger the listener function on event emitted',
+      () => new Promise((done) => {
+        emitter.onDeleteOneEvent((obj, _prop, _colId) => { done(obj); });
+        expect(emitter.deleteOne(new MockObj(), 'meta', undefined))
+          .toBeTruthy();
+      }));
+
+    it('should throw `MaxListenerExceededError` when the event has '
+      + 'already been assigned to a listener', () => {
+      emitter.onDeleteOneEvent((_obj, _prop, _colId) => { });
+      expect(() => { emitter.onDeleteOneEvent((_obj, _prop, _colId?) => { }); })
+        .toThrow(errors.MaxListenerExceededError);
+    });
+  });
+});
