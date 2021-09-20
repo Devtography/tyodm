@@ -7,3 +7,4 @@ export * from './lib/results';
 export * from './lib/schema';
 export * from './lib/odm';
 export { ActionNotSupportedError } from './lib/events/errors';
+export * from './utils/errors';

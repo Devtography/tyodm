@@ -1,5 +1,7 @@
 # TyODM
 
+![npm version](https://img.shields.io/npm/v/@devtography/tyodm)
+
 Fully typed opinionated ODM inspired by Realm & Mongoose. Designed to be 
 compatible with various NoSQL database engines.
 
@@ -41,11 +43,12 @@ class SampleModel extends odm.Obj {
   };
   itemCollection?: Map<string, { itemId: string, name: string }>;
 
-  constructor() {
-    // Only default constructor & constructor with optional parameters ae
-    // allowed. Constructor with non optional parameters will result in
-    // runtime exception.
-    super()
+  constructor(objId?: string) {
+    // Only constructor with optional parameters is allowed. 1st parameter
+    // must be an optional string and needs to be passed to the parent 
+    // constructor so the internal functions can set the `objectId` properly.
+    // Constructor with non optional parameters will result in runtime exception.
+    super(objId);
 
     ...
   }
@@ -127,7 +130,17 @@ class Beta extends odm.Obj {
     props: { ... }
   };
 
-  customId: string = '';
+  customId: string;
+
+  constructor(objId?: string) {
+    super(objId);
+
+    // It is important to assign value to your custom identifier here instead
+    // of doing it on the line you declare the property. Otherwise the value of
+    // you custom identifier will be overwritten by the value assigned there
+    // when retrieve the object from database.
+    this.customId = 'your custom unique identifier';
+  }
 
   ...
 }

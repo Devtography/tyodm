@@ -1,7 +1,7 @@
 import { DynamoDBConfig, MongoDBConfig } from '../config';
 import { TyODM } from '../odm';
 import * as connection from './connection';
-import * as err from './error';
+import * as err from './errors';
 
 const dynamoDBConfig: DynamoDBConfig = {
   region: 'us-west-1',
