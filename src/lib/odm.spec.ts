@@ -4,6 +4,7 @@ import {
   DeleteTableCommand,
   DynamoDBClient,
   GetItemCommand,
+  TransactWriteItem,
   TransactWriteItemsCommand,
 } from '@aws-sdk/client-dynamodb';
 import { ulid } from 'ulid';
@@ -238,6 +239,45 @@ describe('test with DynamoDB', () => {
             sampleSet: { NS: ['0', '1'] },
           });
         });
+
+      afterAll(async () => {
+        const transactionItems: TransactWriteItem[] = [
+          {
+            Delete: {
+              Key: {
+                pk: { S: `${obj.objectSchema().name}#${obj.objectId}` },
+                sk: { S: 'meta' },
+              },
+              TableName: dynamoDBConfig.table,
+            },
+          },
+          {
+            Delete: {
+              Key: {
+                pk: { S: `${obj.objectSchema().name}#${obj.objectId}` },
+                sk: { S: 'row1' },
+              },
+              TableName: dynamoDBConfig.table,
+            },
+          },
+        ];
+
+        Array.from(obj.collection!.keys()).forEach((key) => {
+          transactionItems.push({
+            Delete: {
+              Key: {
+                pk: { S: `${obj.objectSchema().name}#${obj.objectId}` },
+                sk: { S: `collection#${key}` },
+              },
+              TableName: dynamoDBConfig.table,
+            },
+          });
+        });
+
+        await client.send(new TransactWriteItemsCommand({
+          TransactItems: transactionItems,
+        }));
+      });
     });
 
     it('should throw a `DBClientNotAttachedError`', async () => {
