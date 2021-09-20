@@ -1,13 +1,10 @@
-import { PropType } from './typing';
+import { PropType } from './datatype/typings';
 
 /**
  * @param key - Data type of the attribute.
  */
 interface Attr {
-  [key: string]: PropType | {
-    type: PropType,
-    optional?: boolean,
-  } | Attr;
+  [key: string]: PropType | Record<string, PropType>;
 }
 
 /**

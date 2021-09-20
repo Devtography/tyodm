@@ -1,7 +1,11 @@
+/* eslint-disable @typescript-eslint/no-non-null-assertion */
 import { NotImplementedError } from '../utils/errors';
 import { DynamoDBConfig, MongoDBConfig } from './config';
 import * as connection from './connection';
+import type { PendingWriteAction } from './datatype/typings';
 import * as db from './db-drivers';
+import { DBClientNotAttachedError } from './errors';
+import * as writeEvents from './events/db-write-events';
 import { Obj } from './object';
 import { ODMMode } from './odm-mode';
 import { Results } from './results';
@@ -24,6 +28,7 @@ class TyODM {
   readonly config: DynamoDBConfig | MongoDBConfig;
 
   private dbClient?: db.DBDriver;
+  private dbWriteQueue: Array<PendingWriteAction> = [];
 
   /**
    * {@link TyODM} constructor.
@@ -98,11 +103,13 @@ class TyODM {
    * @returns Collection {@link Results} of {@link Obj} specified.
    * @throws `Error` if data models specified is not part of the schema defined
    * in the config the {@link TyODM} instance initialised with.
+   * @experimental
    */
-  async objects<T extends Obj>(Type: { new(): T }): Promise<Results<T>> {
-    const obj = new Type();
+  async objects<T extends Obj>(_Type: { new(): T }): Promise<Results<T>> {
+    // const obj = new Type();
 
-    return new Results<T>(...[obj]);
+    // return new Results<T>(...[obj]);
+    throw new NotImplementedError(this.objects.name);
   }
 
   /**
@@ -111,15 +118,18 @@ class TyODM {
    * @param key - Unique identifier of the target object.
    * @see {@link Obj#objectId} for the value of `key`.
    * @returns Instance of {@link Obj} or `undefined` if no object is found.
-   * @Throws `Error` if data models specified is not part of the schema defined
+   * @throws {@link DBClientNotAttachedError}
+   * Thrown if {@link TyODM} instance is not attached to the database
+   * client.
+   * @throws if data models specified is not part of the schema defined
    * in the config the {@link TyODM} instance initialised with.
    */
   async objectByKey<T extends Obj>(
     Type: { new(): T }, key: string,
   ): Promise<T | undefined> {
-    const obj = new Type();
+    if (!this.attached) { throw new DBClientNotAttachedError(); }
 
-    return obj;
+    return this.dbClient?.getObjById(key, Type);
   }
 
   /**
@@ -132,12 +142,13 @@ class TyODM {
    * @experimental
    */
   async partialObject<T extends Obj>(
-    Type: { new(): T }, key: string,
-    prop: string | { name: string, key: string },
+    _Type: { new(): T }, _key: string,
+    _prop: string | { name: string, key: string },
   ): Promise<T> {
-    const obj = new Type();
+    // const obj = new Type();
 
-    return obj;
+    // return obj;
+    throw new NotImplementedError(this.partialObject.name);
   }
 
   /**
@@ -147,9 +158,12 @@ class TyODM {
    *
    * Nested transactions (calling `write()` within `write()`) is not possible.
    * @param callback - function of transaction details.
+   * @throws {@link DBClientNotAttachedError}
+   * Thrown if {@link TyODM} instance is not attached to the database client.
    * @throws `Error` if exception happens when committing the transaction.
    */
   async write(callback: () => void): Promise<void> {
+    if (!this.attached) { throw new DBClientNotAttachedError(); }
     this.beginTransaction();
 
     try {
@@ -165,18 +179,38 @@ class TyODM {
   }
 
   private beginTransaction(): void {
-    // Start a queue/map ready to save the action.
-    // Register an event handler to understand the underlying operations.
+    // Register event handlers to handle the underlying operations.
+    writeEvents.onInsertObjEvent((obj) => {
+      this.dbClient?.insertObj(obj);
+    });
+
+    writeEvents.onInsertOneEvent((obj, toProp, val) => {
+      this.insertOneEventHandler(obj, toProp, val);
+    });
+
+    writeEvents.onUpdateOneEvent((obj, toProp, identifier, val) => {
+      this.updateOneEventHandler(obj, toProp, identifier, val);
+    });
+
+    writeEvents.onDeleteOneEvent((obj, targetProp, identifier) => {
+      this.deleteOneEventHandler(obj, targetProp, identifier);
+    });
   }
 
   private async commitTransaction(): Promise<void> {
-    // Read the queue/map and form the transactional write action
-    // based on items stored in the queue/map.
-    return Promise.resolve();
+    // return this.dbClient?.commitWriteTransaction();
+    await this.dbClient?.commitWriteTransaction();
+    // Reflects the changes into the corresponding object(s).
+    this.updateObjects();
+
+    this.postCommitTransaction();
   }
 
   private cancelTransaction(): void {
     // Clean the queue/map & unregister the event handler.
+    this.dbClient?.cancelWriteTransaction();
+
+    this.postCommitTransaction();
   }
 
   /**
@@ -187,7 +221,8 @@ class TyODM {
   private attachToDynamoDB() {
     try {
       const client = connection.attachDynamoDBClient(this);
-      this.dbClient = new db.DynamoDBDriver(client);
+      const { table } = this.config as DynamoDBConfig;
+      this.dbClient = new db.DynamoDBDriver(client, table);
     } catch (err) {
       if (err instanceof connection.NotDynamoDBModeError) {
         throw err;
@@ -228,6 +263,130 @@ class TyODM {
     this.dbClient = undefined;
 
     throw new NotImplementedError(this.detachFromDynamoDB.name);
+  }
+
+  private insertOneEventHandler(
+    obj: Obj, toProp: string, val: Record<string, unknown>,
+  ): void {
+    this.dbWriteQueue.push({
+      event: writeEvents.Event.InsertOne,
+      value: { obj, toProp, val },
+    });
+
+    this.dbClient?.insertOne(
+      `${obj.objectSchema().name}#${obj.objectId}`, val, toProp,
+      obj.objectSchema().props[toProp],
+    );
+  }
+
+  private updateOneEventHandler(
+    obj: Obj, toProp: string, identifier: string | undefined,
+    val: Record<string, unknown>,
+  ): void {
+    this.dbWriteQueue.push({
+      event: writeEvents.Event.UpdateOne,
+      value: {
+        obj, toProp, identifier, val,
+      },
+    });
+
+    if (identifier === undefined) {
+      this.dbClient?.update(
+        `${obj.objectSchema().name}#${obj.objectId}`, toProp,
+        val, obj.objectSchema().props[toProp],
+      );
+    } else {
+      this.dbClient?.update(
+        `${obj.objectSchema().name}#${obj.objectId}`,
+        `${toProp}#${identifier}`, val, obj.objectSchema().props[toProp],
+      );
+    }
+  }
+
+  private deleteOneEventHandler(
+    obj: Obj, targetProp: string, identifier: string | undefined,
+  ): void {
+    this.dbWriteQueue.push({
+      event: writeEvents.Event.DeleteOne,
+      value: { obj, targetProp, identifier },
+    });
+
+    if (identifier !== undefined) {
+      this.dbClient?.deleteOne(
+        `${obj.objectSchema().name}#${obj.objectId}`,
+        `${targetProp}#${identifier}`,
+      );
+    } else {
+      this.dbClient?.deleteOne(`${obj.objectSchema().name}#${obj.objectId}`,
+        targetProp);
+    }
+  }
+
+  private updateObjects(): void {
+    // No schema validation in this function. Relies on functions from
+    // `DBDriver` called in pervious steps.
+    this.dbWriteQueue.forEach((task) => {
+      const { obj } = task.value as writeEvents.actions.Base;
+
+      switch (task.event) {
+        case (writeEvents.Event.InsertOne): {
+          const { toProp, val } = task.value as
+            writeEvents.actions.InsertOne;
+
+          if (obj.objectSchema().props[toProp].type === 'single') {
+            obj[toProp] = val;
+          } else if (obj.objectSchema().props[toProp].type === 'collection') {
+            if (obj[toProp] === undefined) { obj[toProp] = new Map(); }
+            (obj[toProp] as Map<string, unknown>).set(
+              val[obj.objectSchema().props[toProp].identifier!] as string,
+              val,
+            );
+          }
+          break;
+        }
+        case (writeEvents.Event.UpdateOne): {
+          const { toProp, identifier, val } = task.value as
+            writeEvents.actions.UpdateOne;
+
+          let elm: Record<string, unknown> | undefined;
+
+          if (identifier !== undefined) {
+            elm = (obj[toProp] as Map<string, Record<string, unknown>>)
+              .get(identifier);
+          }
+
+          Object.keys(val).forEach((key) => {
+            if (identifier === undefined) {
+              (obj[toProp] as Record<string, unknown>)[key] = val[key];
+            } else { elm![key] = val[key]; }
+          });
+          break;
+        }
+        case (writeEvents.Event.DeleteOne): {
+          const { targetProp, identifier } = task.value as
+            writeEvents.actions.DeleteOne;
+
+          if (obj.objectSchema().props[targetProp].type === 'single') {
+            obj[targetProp] = undefined;
+          } else if (obj.objectSchema().props[targetProp]
+            .type === 'collection') {
+            if ((obj[targetProp] as Map<string, unknown>).size === 1) {
+              // Remove the entire map object if it only contains one record.
+              obj[targetProp] = undefined;
+            } else {
+              (obj[targetProp] as Map<string, unknown>).delete(identifier!);
+            }
+          }
+          break;
+        }
+        default: break;
+      }
+    });
+  }
+
+  private postCommitTransaction(): void {
+    this.dbWriteQueue.length = 0;
+    writeEvents.emitter.removeAllListeners();
   }
 }
 
