@@ -53,7 +53,7 @@ it('should emit an `UpdateOne` event', () => new Promise<void>((done) => {
   obj.updateRecord('meta', values);
 }));
 
-it('should emit an `DeleteRecord` event', () => new Promise((done) => {
+it('should emit an `DeleteOne` event', () => new Promise((done) => {
   emitter.onDeleteOneEvent((receivedObj, prop, identifier) => {
     expect(receivedObj).toEqual(obj);
     expect(prop).toEqual('meta');
