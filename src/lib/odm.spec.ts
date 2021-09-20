@@ -326,6 +326,65 @@ describe('test with DynamoDB', () => {
       });
     });
 
+    describe('event `DeleteOne`', () => {
+      beforeAll(async () => {
+        await odm.attach();
+        await putCommonObj();
+      });
+
+      it('should delete record of a `single` type prop in `commonObj` '
+        + '& database', async () => {
+        await expect(odm.write(() => { commonObj.deleteRecord('row1'); }))
+          .resolves.not.toThrow();
+
+        expect(commonObj.row1).toBeUndefined();
+
+        const result = await client.send(new GetItemCommand({
+          Key: {
+            pk: { S: `${commonObj.objectSchema().name}#${objId}` },
+            sk: { S: 'row1' },
+          },
+          TableName: dynamoDBConfig.table,
+        }));
+
+        expect(result.Item).toBeUndefined();
+      });
+
+      it('should delete record of a `collection` type prop in `commonObj` '
+        + '& database', async () => {
+        await expect(odm.write(() => {
+          commonObj.deleteRecord('collection', colId1);
+        })).resolves.not.toThrow();
+
+        expect(commonObj.collection!.has(colId1)).toBeFalsy();
+
+        await expect(odm.write(() => {
+          commonObj.deleteRecord('collection', colId2);
+        })).resolves.not.toThrow();
+
+        expect(commonObj.collection).toBeUndefined();
+
+        const result = await client.send(new QueryCommand({
+          TableName: dynamoDBConfig.table,
+          KeyConditionExpression: 'pk = :pk AND begins_with(sk, :sk)',
+          ExpressionAttributeValues: {
+            ':pk': { S: `${commonObj.objectSchema().name}#${objId}` },
+            ':sk': { S: 'collection#' },
+          },
+        }));
+
+        expect(result.Count).toBe(0);
+        expect(result.Items).toHaveLength(0);
+      });
+
+      afterAll(async () => {
+        // Remove the remaining record(s) from database.
+        await odm.write(() => { commonObj.deleteRecord('meta'); });
+
+        await odm.detach();
+      });
+    });
+
     it('should throw a `DBClientNotAttachedError`', async () => {
       await expect(odm.write(() => { })).rejects
         .toThrow(DBClientNotAttachedError);

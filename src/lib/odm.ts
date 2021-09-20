@@ -179,13 +179,17 @@ class TyODM {
   }
 
   private beginTransaction(): void {
-    // Register an event handler to handle the underlying operations.
+    // Register event handlers to handle the underlying operations.
     writeEvents.onInsertObjEvent((obj) => {
       this.dbClient?.insertObj(obj);
     });
 
     writeEvents.onInsertOneEvent((obj, toProp, val) => {
       this.insertOneEventHandler(obj, toProp, val);
+    });
+
+    writeEvents.onDeleteOneEvent((obj, targetProp, colId) => {
+      this.deleteOneEventHandler(obj, targetProp, colId);
     });
   }
 
@@ -271,6 +275,25 @@ class TyODM {
     );
   }
 
+  private deleteOneEventHandler(
+    obj: Obj, targetProp: string, identifier: string | undefined,
+  ): void {
+    this.dbWriteQueue.push({
+      event: writeEvents.Event.DeleteOne,
+      value: { obj, targetProp, identifier },
+    });
+
+    if (identifier !== undefined) {
+      this.dbClient?.deleteOne(
+        `${obj.objectSchema().name}#${obj.objectId}`,
+        `${targetProp}#${identifier}`,
+      );
+    } else {
+      this.dbClient?.deleteOne(`${obj.objectSchema().name}#${obj.objectId}`,
+        targetProp);
+    }
+  }
+
   private updateObjects(): void {
     // No schema validation in this function. Relies on functions from
     // `DBDriver` called in pervious steps.
@@ -290,6 +313,23 @@ class TyODM {
               val[obj.objectSchema().props[toProp].identifier!] as string,
               val,
             );
+          }
+          break;
+        }
+        case (writeEvents.Event.DeleteOne): {
+          const { targetProp, identifier } = task.value as
+            writeEvents.actions.DeleteOne;
+
+          if (obj.objectSchema().props[targetProp].type === 'single') {
+            obj[targetProp] = undefined;
+          } else if (obj.objectSchema().props[targetProp]
+            .type === 'collection') {
+            if ((obj[targetProp] as Map<string, unknown>).size === 1) {
+              // Remove the entire map object if it only contains one record.
+              obj[targetProp] = undefined;
+            } else {
+              (obj[targetProp] as Map<string, unknown>).delete(identifier!);
+            }
           }
           break;
         }
