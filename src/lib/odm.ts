@@ -188,6 +188,10 @@ class TyODM {
       this.insertOneEventHandler(obj, toProp, val);
     });
 
+    writeEvents.onUpdateEvent((obj, toProp, identifier, val) => {
+      this.updateEventHandler(obj, toProp, identifier, val);
+    });
+
     writeEvents.onDeleteOneEvent((obj, targetProp, colId) => {
       this.deleteOneEventHandler(obj, targetProp, colId);
     });
@@ -275,6 +279,30 @@ class TyODM {
     );
   }
 
+  private updateEventHandler(
+    obj: Obj, toProp: string, identifier: string | undefined,
+    val: Record<string, unknown>,
+  ): void {
+    this.dbWriteQueue.push({
+      event: writeEvents.Event.Update,
+      value: {
+        obj, toProp, identifier, val,
+      },
+    });
+
+    if (identifier === undefined) {
+      this.dbClient?.update(
+        `${obj.objectSchema().name}#${obj.objectId}`, toProp,
+        val, obj.objectSchema().props[toProp],
+      );
+    } else {
+      this.dbClient?.update(
+        `${obj.objectSchema().name}#${obj.objectId}`,
+        `${toProp}#${identifier}`, val, obj.objectSchema().props[toProp],
+      );
+    }
+  }
+
   private deleteOneEventHandler(
     obj: Obj, targetProp: string, identifier: string | undefined,
   ): void {
@@ -314,6 +342,24 @@ class TyODM {
               val,
             );
           }
+          break;
+        }
+        case (writeEvents.Event.Update): {
+          const { toProp, identifier, val } = task.value as
+            writeEvents.actions.UpdateOne;
+
+          let elm: Record<string, unknown> | undefined;
+
+          if (identifier !== undefined) {
+            elm = (obj[toProp] as Map<string, Record<string, unknown>>)
+              .get(identifier);
+          }
+
+          Object.keys(val).forEach((key) => {
+            if (identifier === undefined) {
+              (obj[toProp] as Record<string, unknown>)[key] = val[key];
+            } else { elm![key] = val[key]; }
+          });
           break;
         }
         case (writeEvents.Event.DeleteOne): {

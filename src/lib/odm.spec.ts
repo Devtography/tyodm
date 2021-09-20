@@ -326,6 +326,61 @@ describe('test with DynamoDB', () => {
       });
     });
 
+    describe('event `Update`', () => {
+      beforeAll(async () => {
+        await odm.attach();
+        await putCommonObj();
+      });
+
+      it('should update record of a `single` type prop in `commonObj` '
+        + '& database', async () => {
+        await expect(odm.write(() => {
+          commonObj.updateRecord('meta', { objName: 'updated mock' });
+        })).resolves.not.toThrow();
+
+        expect(commonObj.meta!.objName).toBe('updated mock');
+        expect(commonObj.meta!.objRank).toBe(1);
+
+        const result = await client.send(new GetItemCommand({
+          Key: {
+            pk: { S: `${commonObj.objectSchema().name}#${objId}` },
+            sk: { S: 'meta' },
+          },
+          TableName: dynamoDBConfig.table,
+        }));
+
+        expect(result.Item).not.toBeUndefined();
+        expect(result.Item!.objName).toEqual({ S: 'updated mock' });
+        expect(result.Item!.objRank).toEqual({ N: '1' });
+      });
+
+      it('should update record of a `collection` type prop in `commonObj` '
+        + '& database', async () => {
+        await expect(odm.write(() => {
+          commonObj.updateRecord('collection',
+            { sampleSet: [0, 1] }, colId1);
+        })).resolves.not.toThrow();
+
+        expect(commonObj.collection!.get(colId1)!.sampleSet).toEqual([0, 1]);
+
+        const result = await client.send(new GetItemCommand({
+          Key: {
+            pk: { S: `${commonObj.objectSchema().name}#${objId}` },
+            sk: { S: `collection#${colId1}` },
+          },
+          TableName: dynamoDBConfig.table,
+        }));
+
+        expect(result.Item).not.toBeUndefined();
+        expect(result.Item!.sampleSet).toEqual({ NS: ['0', '1'] });
+      });
+
+      afterAll(async () => {
+        await deleteCommonObj();
+        await odm.detach();
+      });
+    });
+
     describe('event `DeleteOne`', () => {
       beforeAll(async () => {
         await odm.attach();
