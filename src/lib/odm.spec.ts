@@ -4,6 +4,7 @@ import {
   DeleteTableCommand,
   DynamoDBClient,
   GetItemCommand,
+  QueryCommand,
   TransactWriteItem,
   TransactWriteItemsCommand,
 } from '@aws-sdk/client-dynamodb';
@@ -63,10 +64,98 @@ describe('test with DynamoDB', () => {
   let directAccessODM: TyODM;
   let client: DynamoDBClient;
 
+  async function putCommonObj(): Promise<void> {
+    await client.send(new TransactWriteItemsCommand({
+      TransactItems: [
+        {
+          Put: {
+            Item: {
+              pk: { S: `${MockObj.name}#${objId}` },
+              sk: { S: 'meta' },
+              objName: { S: 'mock' },
+              objRank: { N: '1' },
+            },
+            TableName: dynamoDBConfig.table,
+          },
+        },
+        {
+          Put: {
+            Item: {
+              pk: { S: `${MockObj.name}#${objId}` },
+              sk: { S: 'row1' },
+              subObj: { M: { prop1: { SS: ['1', '2'] } } },
+            },
+            TableName: dynamoDBConfig.table,
+          },
+        },
+        {
+          Put: {
+            Item: {
+              pk: { S: `${MockObj.name}#${objId}` },
+              sk: { S: `collection#${colId1}` },
+              collectionId: { S: colId1 },
+              sampleSet: { NS: ['1', '2'] },
+            },
+            TableName: dynamoDBConfig.table,
+          },
+        },
+        {
+          Put: {
+            Item: {
+              pk: { S: `${MockObj.name}#${objId}` },
+              sk: { S: `collection#${colId2}` },
+              collectionId: { S: colId2 },
+              sampleSet: { NS: ['1', '2'] },
+            },
+            TableName: dynamoDBConfig.table,
+          },
+        },
+      ],
+    }));
+  }
+
+  async function deleteCommonObj(): Promise<void> {
+    const writeItems: TransactWriteItem[] = [
+      {
+        Delete: {
+          Key: {
+            pk: { S: `${commonObj.objectSchema().name}#${objId}` },
+            sk: { S: 'meta' },
+          },
+          TableName: dynamoDBConfig.table,
+        },
+      },
+      {
+        Delete: {
+          Key: {
+            pk: { S: `${commonObj.objectSchema().name}#${objId}` },
+            sk: { S: 'row1' },
+          },
+          TableName: dynamoDBConfig.table,
+        },
+      },
+    ];
+
+    Array.from(commonObj.collection!.keys()).forEach((key) => {
+      writeItems.push({
+        Delete: {
+          Key: {
+            pk: { S: `${commonObj.objectSchema().name}#${objId}` },
+            sk: { S: `collection#${key}` },
+          },
+          TableName: dynamoDBConfig.table,
+        },
+      });
+    });
+
+    await client.send(new TransactWriteItemsCommand({
+      TransactItems: writeItems,
+    }));
+  }
+
   beforeAll(async () => {
     // Setup shared ODM instance.
     odm = new TyODM(dynamoDBConfig);
-    await odm.attach();
 
     // Setup DynamoDB client for direct database access.
     directAccessODM = new TyODM(dynamoDBConfig);
@@ -89,54 +178,8 @@ describe('test with DynamoDB', () => {
 
   describe('functions for data retrieve from database', () => {
     beforeAll(async () => {
-      // Put records.
-      await client.send(new TransactWriteItemsCommand({
-        TransactItems: [
-          {
-            Put: {
-              Item: {
-                pk: { S: `${MockObj.name}#${objId}` },
-                sk: { S: 'meta' },
-                objName: { S: 'mock' },
-                objRank: { N: '1' },
-              },
-              TableName: dynamoDBConfig.table,
-            },
-          },
-          {
-            Put: {
-              Item: {
-                pk: { S: `${MockObj.name}#${objId}` },
-                sk: { S: 'row1' },
-                subObj: { M: { prop1: { SS: ['1', '2'] } } },
-              },
-              TableName: dynamoDBConfig.table,
-            },
-          },
-          {
-            Put: {
-              Item: {
-                pk: { S: `${MockObj.name}#${objId}` },
-                sk: { S: `collection#${colId1}` },
-                collectionId: { S: colId1 },
-                sampleSet: { NS: ['1', '2'] },
-              },
-              TableName: dynamoDBConfig.table,
-            },
-          },
-          {
-            Put: {
-              Item: {
-                pk: { S: `${MockObj.name}#${objId}` },
-                sk: { S: `collection#${colId2}` },
-                collectionId: { S: colId2 },
-                sampleSet: { NS: ['1', '2'] },
-              },
-              TableName: dynamoDBConfig.table,
-            },
-          },
-        ],
-      }));
+      await odm.attach();
+      await putCommonObj();
     });
 
     describe('function `objectByKey`', () => {
@@ -163,6 +206,7 @@ describe('test with DynamoDB', () => {
       });
 
       afterAll(async () => {
+        await deleteCommonObj();
         await odm.detach();
       });
     });
@@ -277,18 +321,18 @@ describe('test with DynamoDB', () => {
         await client.send(new TransactWriteItemsCommand({
           TransactItems: transactionItems,
         }));
+
+        await odm.detach();
       });
     });
 
     it('should throw a `DBClientNotAttachedError`', async () => {
-      await odm.detach();
-
       await expect(odm.write(() => { })).rejects
         .toThrow(DBClientNotAttachedError);
     });
 
     afterAll(async () => {
-      await odm.detach();
+      await directAccessODM.detach();
     });
   });
 
