@@ -214,7 +214,6 @@ describe('test with DynamoDB', () => {
 
       it('should insert record to a `collection` type prop in `obj` & database',
         async () => {
-          expect(1).toEqual(1);
           const colId = ulid();
 
           await expect(odm.write(() => {
