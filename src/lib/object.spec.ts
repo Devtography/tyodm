@@ -54,10 +54,10 @@ it('should emit an `UpdateOne` event', () => new Promise<void>((done) => {
 }));
 
 it('should emit an `DeleteRecord` event', () => new Promise((done) => {
-  emitter.onDeleteOneEvent((receivedObj, prop, colId) => {
+  emitter.onDeleteOneEvent((receivedObj, prop, identifier) => {
     expect(receivedObj).toEqual(obj);
     expect(prop).toEqual('meta');
-    expect(colId).toBeUndefined();
+    expect(identifier).toBeUndefined();
     done(undefined);
   });
 

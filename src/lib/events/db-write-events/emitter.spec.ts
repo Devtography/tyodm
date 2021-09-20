@@ -112,16 +112,17 @@ describe('`DeleteOne` event', () => {
   describe('function `onDeleteOneEvent`', () => {
     it('should trigger the listener function on event emitted',
       () => new Promise((done) => {
-        emitter.onDeleteOneEvent((obj, _prop, _colId) => { done(obj); });
+        emitter.onDeleteOneEvent((obj, _prop, _identifier) => { done(obj); });
         expect(emitter.deleteOne(new MockObj(), 'meta', undefined))
           .toBeTruthy();
       }));
 
     it('should throw `MaxListenerExceededError` when the event has '
       + 'already been assigned to a listener', () => {
-      emitter.onDeleteOneEvent((_obj, _prop, _colId) => { });
-      expect(() => { emitter.onDeleteOneEvent((_obj, _prop, _colId?) => { }); })
-        .toThrow(errors.MaxListenerExceededError);
+      emitter.onDeleteOneEvent((_obj, _prop, _identifier) => { });
+      expect(() => {
+        emitter.onDeleteOneEvent((_obj, _prop, _identifier?) => { });
+      }).toThrow(errors.MaxListenerExceededError);
     });
   });
 });

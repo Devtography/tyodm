@@ -192,8 +192,8 @@ class TyODM {
       this.updateOneEventHandler(obj, toProp, identifier, val);
     });
 
-    writeEvents.onDeleteOneEvent((obj, targetProp, colId) => {
-      this.deleteOneEventHandler(obj, targetProp, colId);
+    writeEvents.onDeleteOneEvent((obj, targetProp, identifier) => {
+      this.deleteOneEventHandler(obj, targetProp, identifier);
     });
   }
 
