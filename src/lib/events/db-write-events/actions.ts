@@ -1,13 +1,33 @@
 import type { Obj } from '../../object';
 
 /**
- * Data to be passed into queue for action of inserting entire {@link Obj}
- * object.
  * @internal
  */
-interface InsertNewObj<T extends Obj> {
-  obj: Obj,
-  ObjType: { new(): T },
+export interface Base {
+  obj: Obj;
 }
 
-export { InsertNewObj };
+/**
+ * @internal
+ */
+export interface InsertOne extends Base {
+  toProp: string;
+  val: Record<string, unknown>;
+}
+
+/**
+ * @internal
+ */
+export interface UpdateOne extends Base {
+  toProp: string;
+  identifier?: string;
+  val: Record<string, unknown>;
+}
+
+/**
+ * @internal
+ */
+export interface DeleteOne extends Base {
+  targetProp: string;
+  identifier?: string;
+}
