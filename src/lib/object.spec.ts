@@ -39,6 +39,20 @@ it('should emit an `InsertOne` event', () => new Promise((done) => {
   obj.insertRecord('meta', values);
 }));
 
+it('should emit an `Update` event', () => new Promise<void>((done) => {
+  const values = { objName: 'updated mock', objRank: 2 };
+
+  emitter.onUpdateEvent((receivedObj, toProp, identifier, val) => {
+    expect(receivedObj).toEqual(obj);
+    expect(toProp).toEqual('meta');
+    expect(identifier).toBeUndefined();
+    expect(val).toEqual(values);
+    done();
+  });
+
+  obj.updateRecord('meta', values);
+}));
+
 it('should emit an `DeleteRecord` event', () => new Promise((done) => {
   emitter.onDeleteOneEvent((receivedObj, prop, colId) => {
     expect(receivedObj).toEqual(obj);

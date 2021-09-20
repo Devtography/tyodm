@@ -64,6 +64,21 @@ abstract class Obj {
   }
 
   /**
+   * Updates the value(s) to the target property / record of this {@link Obj}
+   * instance.
+   * @param toProp - Name of the target property. Must be one of the keys
+   * defined in `objectSchema().props`.
+   * @param val - Value(s) to be updated.
+   * @param identifier - Identifier of the target record if the property type
+   * of the target property is `collection`.
+   */
+  updateRecord(
+    toProp: string, val: Record<string, unknown>, identifier?: string,
+  ): void {
+    writeEvents.update(this, toProp, identifier, val);
+  }
+
+  /**
    * Deletes the target property (or an item in target property if type of
    * target property is `collection`) of this {@link Obj} instance.
    * @param targetProp - Name of the target property. Must be one of the keys
