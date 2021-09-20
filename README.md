@@ -1,5 +1,7 @@
 # TyODM
 
+![npm version](https://img.shields.io/npm/v/@devtography/tyodm)
+
 Fully typed opinionated ODM inspired by Realm & Mongoose. Designed to be 
 compatible with various NoSQL database engines.
 
