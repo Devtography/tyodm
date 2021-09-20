@@ -36,7 +36,7 @@ it('should emit an `InsertOne` event', () => new Promise((done) => {
     done(obj);
   });
 
-  obj.insertRecord('meta', values);
+  obj.insertOne('meta', values);
 }));
 
 it('should emit an `UpdateOne` event', () => new Promise<void>((done) => {
@@ -50,7 +50,7 @@ it('should emit an `UpdateOne` event', () => new Promise<void>((done) => {
     done();
   });
 
-  obj.updateRecord('meta', values);
+  obj.updateOne('meta', values);
 }));
 
 it('should emit an `DeleteOne` event', () => new Promise((done) => {
@@ -61,5 +61,5 @@ it('should emit an `DeleteOne` event', () => new Promise((done) => {
     done(undefined);
   });
 
-  obj.deleteRecord('meta');
+  obj.deleteOne('meta');
 }));

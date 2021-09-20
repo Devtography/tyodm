@@ -237,7 +237,7 @@ describe('test with DynamoDB', () => {
       it('should insert record to a `single` type prop in `obj` & database',
         async () => {
           await expect(odm.write(() => {
-            obj.insertRecord('meta', { objName: 'mock' });
+            obj.insertOne('meta', { objName: 'mock' });
           })).resolves.not.toThrow();
 
           expect(obj.meta).toEqual({ objName: 'mock' });
@@ -262,7 +262,7 @@ describe('test with DynamoDB', () => {
           const colId = ulid();
 
           await expect(odm.write(() => {
-            obj.insertRecord('collection',
+            obj.insertOne('collection',
               { collectionId: colId, sampleSet: [0, 1] });
           })).resolves.not.toThrow();
 
@@ -335,7 +335,7 @@ describe('test with DynamoDB', () => {
       it('should update record of a `single` type prop in `commonObj` '
         + '& database', async () => {
         await expect(odm.write(() => {
-          commonObj.updateRecord('meta', { objName: 'updated mock' });
+          commonObj.updateOne('meta', { objName: 'updated mock' });
         })).resolves.not.toThrow();
 
         expect(commonObj.meta!.objName).toBe('updated mock');
@@ -357,7 +357,7 @@ describe('test with DynamoDB', () => {
       it('should update record of a `collection` type prop in `commonObj` '
         + '& database', async () => {
         await expect(odm.write(() => {
-          commonObj.updateRecord('collection',
+          commonObj.updateOne('collection',
             { sampleSet: [0, 1] }, colId1);
         })).resolves.not.toThrow();
 
@@ -389,7 +389,7 @@ describe('test with DynamoDB', () => {
 
       it('should delete record of a `single` type prop in `commonObj` '
         + '& database', async () => {
-        await expect(odm.write(() => { commonObj.deleteRecord('row1'); }))
+        await expect(odm.write(() => { commonObj.deleteOne('row1'); }))
           .resolves.not.toThrow();
 
         expect(commonObj.row1).toBeUndefined();
@@ -408,13 +408,13 @@ describe('test with DynamoDB', () => {
       it('should delete record of a `collection` type prop in `commonObj` '
         + '& database', async () => {
         await expect(odm.write(() => {
-          commonObj.deleteRecord('collection', colId1);
+          commonObj.deleteOne('collection', colId1);
         })).resolves.not.toThrow();
 
         expect(commonObj.collection!.has(colId1)).toBeFalsy();
 
         await expect(odm.write(() => {
-          commonObj.deleteRecord('collection', colId2);
+          commonObj.deleteOne('collection', colId2);
         })).resolves.not.toThrow();
 
         expect(commonObj.collection).toBeUndefined();
@@ -434,7 +434,7 @@ describe('test with DynamoDB', () => {
 
       afterAll(async () => {
         // Remove the remaining record(s) from database.
-        await odm.write(() => { commonObj.deleteRecord('meta'); });
+        await odm.write(() => { commonObj.deleteOne('meta'); });
 
         await odm.detach();
       });

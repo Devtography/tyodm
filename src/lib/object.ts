@@ -59,7 +59,7 @@ abstract class Obj {
    * defined in `objectSchema().props`.
    * @param val - Value(s) to be inserted.
    */
-  insertRecord(toProp: string, val: Record<string, unknown>): void {
+  insertOne(toProp: string, val: Record<string, unknown>): void {
     writeEvents.insertOne(this, toProp, val);
   }
 
@@ -72,7 +72,7 @@ abstract class Obj {
    * @param identifier - Identifier of the target record if the property type
    * of the target property is `collection`.
    */
-  updateRecord(
+  updateOne(
     toProp: string, val: Record<string, unknown>, identifier?: string,
   ): void {
     writeEvents.updateOne(this, toProp, identifier, val);
@@ -86,7 +86,7 @@ abstract class Obj {
    * @param identifier - Identifier of the target record if the property type
    * of the target property is `collection`.
    */
-  deleteRecord(targetProp: string, identifier?: string): void {
+  deleteOne(targetProp: string, identifier?: string): void {
     writeEvents.deleteOne(this, targetProp, identifier);
   }
 }
