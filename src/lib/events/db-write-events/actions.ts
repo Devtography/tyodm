@@ -16,3 +16,8 @@ export interface InsertOne extends Base {
   toProp: string;
   val: Record<string, unknown>;
 }
+
+export interface DeleteOne extends Base {
+  targetProp: string;
+  identifier?: string;
+}
