@@ -115,6 +115,13 @@ export function deleteOne(
   return emitter.emit(Event.DeleteOne, obj, prop, identifier);
 }
 
+/**
+ * Set the event listener for event {@link Event.DeleteOne}.
+ * @param listener - Handler function for the event.
+ * @throws {@link MaxListenerExceededError}
+ * Thrown if the event is already assigned to another listener.
+ * @internal
+ */
 export function onDeleteOneEvent(
   listener: (obj: Obj, prop: string, identifier: string | undefined) => void,
 ): void {

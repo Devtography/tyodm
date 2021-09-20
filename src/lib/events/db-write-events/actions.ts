@@ -8,8 +8,6 @@ export interface Base {
 }
 
 /**
- * Data to be passed into queue for action of inserting entire {@link Obj}
- * object.
  * @internal
  */
 export interface InsertOne extends Base {
@@ -17,12 +15,18 @@ export interface InsertOne extends Base {
   val: Record<string, unknown>;
 }
 
+/**
+ * @internal
+ */
 export interface UpdateOne extends Base {
   toProp: string;
   identifier?: string;
   val: Record<string, unknown>;
 }
 
+/**
+ * @internal
+ */
 export interface DeleteOne extends Base {
   targetProp: string;
   identifier?: string;
