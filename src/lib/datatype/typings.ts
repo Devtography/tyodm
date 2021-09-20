@@ -33,7 +33,8 @@ type PropType = `${ScalarType}${'?' | '[]' | '<>' | ''}`;
  */
 type PendingWriteAction = {
   event: DbWriteEvent,
-  value: dbWriteActions.InsertOne | dbWriteActions.DeleteOne,
+  value: dbWriteActions.InsertOne | dbWriteActions.UpdateOne
+  | dbWriteActions.DeleteOne,
 };
 
 export { PropType, PendingWriteAction };
