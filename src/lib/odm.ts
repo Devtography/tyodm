@@ -188,8 +188,8 @@ class TyODM {
       this.insertOneEventHandler(obj, toProp, val);
     });
 
-    writeEvents.onUpdateEvent((obj, toProp, identifier, val) => {
-      this.updateEventHandler(obj, toProp, identifier, val);
+    writeEvents.onUpdateOneEvent((obj, toProp, identifier, val) => {
+      this.updateOneEventHandler(obj, toProp, identifier, val);
     });
 
     writeEvents.onDeleteOneEvent((obj, targetProp, colId) => {
@@ -279,12 +279,12 @@ class TyODM {
     );
   }
 
-  private updateEventHandler(
+  private updateOneEventHandler(
     obj: Obj, toProp: string, identifier: string | undefined,
     val: Record<string, unknown>,
   ): void {
     this.dbWriteQueue.push({
-      event: writeEvents.Event.Update,
+      event: writeEvents.Event.UpdateOne,
       value: {
         obj, toProp, identifier, val,
       },
@@ -344,7 +344,7 @@ class TyODM {
           }
           break;
         }
-        case (writeEvents.Event.Update): {
+        case (writeEvents.Event.UpdateOne): {
           const { toProp, identifier, val } = task.value as
             writeEvents.actions.UpdateOne;
 

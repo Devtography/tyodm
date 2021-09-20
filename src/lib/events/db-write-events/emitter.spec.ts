@@ -63,33 +63,35 @@ describe('`InsertOne` event', () => {
   });
 });
 
-describe('`Update` event', () => {
-  describe('function `update`', () => {
+describe('`UpdateOne` event', () => {
+  describe('function `updateOne`', () => {
     it('should return `false when event is not being listened', () => {
-      expect(emitter.update(new MockObj(), 'meta', undefined, {})).toBeFalsy();
+      expect(emitter.updateOne(new MockObj(), 'meta', undefined, {}))
+        .toBeFalsy();
     });
 
     it('should return `true` when event is handled by a listener', () => {
-      emitter.emitter.on(Event.Update, () => { });
-      expect(emitter.update(new MockObj(), 'meta', undefined, {})).toBeTruthy();
+      emitter.emitter.on(Event.UpdateOne, () => { });
+      expect(emitter.updateOne(new MockObj(), 'meta', undefined, {}))
+        .toBeTruthy();
     });
   });
 
-  describe('function `onUpdateEvent`', () => {
+  describe('function `onUpdateOneEvent`', () => {
     it('should trigger the listener function on event emitted',
       () => new Promise<void>((done) => {
-        emitter.onUpdateEvent((_obj, _toProp, _identifier, _val) => {
+        emitter.onUpdateOneEvent((_obj, _toProp, _identifier, _val) => {
           done();
         });
-        expect(emitter.update(new MockObj(), 'meta', undefined, {}))
+        expect(emitter.updateOne(new MockObj(), 'meta', undefined, {}))
           .toBeTruthy();
       }));
 
     it('should throw `MaxListenerExceededError` when the event has '
       + 'already been assigned to a listener', () => {
-      emitter.onUpdateEvent((_obj, _toProp, _identifier, _val) => { });
+      emitter.onUpdateOneEvent((_obj, _toProp, _identifier, _val) => { });
       expect(() => {
-        emitter.onUpdateEvent((_obj, _toProp, _identifier, _val) => { });
+        emitter.onUpdateOneEvent((_obj, _toProp, _identifier, _val) => { });
       }).toThrow(errors.MaxListenerExceededError);
     });
   });

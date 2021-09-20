@@ -326,7 +326,7 @@ describe('test with DynamoDB', () => {
       });
     });
 
-    describe('event `Update`', () => {
+    describe('event `UpdateOne`', () => {
       beforeAll(async () => {
         await odm.attach();
         await putCommonObj();

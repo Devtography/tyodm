@@ -75,29 +75,29 @@ export function onInsertOneEvent(
  * @returns `true` if the event is being listened. `false` if otherwise.
  * @internal
  */
-export function update(
+export function updateOne(
   obj: Obj, toProp: string, identifier: string | undefined,
   val: Record<string, unknown>,
 ): boolean {
-  return emitter.emit(Event.Update, obj, toProp, identifier, val);
+  return emitter.emit(Event.UpdateOne, obj, toProp, identifier, val);
 }
 
 /**
- * Set the event listener for event {@link Event.Update}.
+ * Set the event listener for event {@link Event.UpdateOne}.
  * @param listener -Handler function for the event.
  * @throws {@link MaxListenerExceededError}
  * Thrown if the event is already assigned to another listener.
  * @internal
  */
-export function onUpdateEvent(listener: (
+export function onUpdateOneEvent(listener: (
   obj: Obj, toProp: string, identifier: string | undefined,
   val: Record<string, unknown>
 ) => void): void {
-  if (emitter.listenerCount(Event.Update) > 0) {
-    throw new MaxListenerExceededError(Event.Update);
+  if (emitter.listenerCount(Event.UpdateOne) > 0) {
+    throw new MaxListenerExceededError(Event.UpdateOne);
   }
 
-  emitter.on(Event.Update, listener);
+  emitter.on(Event.UpdateOne, listener);
 }
 
 /**

@@ -75,7 +75,7 @@ abstract class Obj {
   updateRecord(
     toProp: string, val: Record<string, unknown>, identifier?: string,
   ): void {
-    writeEvents.update(this, toProp, identifier, val);
+    writeEvents.updateOne(this, toProp, identifier, val);
   }
 
   /**

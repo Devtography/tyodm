@@ -4,7 +4,7 @@
 enum Event {
   InsertObj = 'insert new object',
   InsertOne = 'insert one record',
-  Update = 'update',
+  UpdateOne = 'update',
   DeleteOne = 'delete one record',
 }
 
