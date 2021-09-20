@@ -66,6 +66,41 @@ export function onInsertOneEvent(
 }
 
 /**
+ * Emits an event of single record update.
+ * @param obj - The object to update the values in `val` to.
+ * @param toProp - Name of the targeted property.
+ * @param identifier - Identifier of the target record if the target property
+ * is a `collection` type property.
+ * @param val - Value(s) to be updated.
+ * @returns `true` if the event is being listened. `false` if otherwise.
+ * @internal
+ */
+export function update(
+  obj: Obj, toProp: string, identifier: string | undefined,
+  val: Record<string, unknown>,
+): boolean {
+  return emitter.emit(Event.Update, obj, toProp, identifier, val);
+}
+
+/**
+ * Set the event listener for event {@link Event.Update}.
+ * @param listener -Handler function for the event.
+ * @throws {@link MaxListenerExceededError}
+ * Thrown if the event is already assigned to another listener.
+ * @internal
+ */
+export function onUpdateEvent(listener: (
+  obj: Obj, toProp: string, identifier: string | undefined,
+  val: Record<string, unknown>
+) => void): void {
+  if (emitter.listenerCount(Event.Update) > 0) {
+    throw new MaxListenerExceededError(Event.Update);
+  }
+
+  emitter.on(Event.Update, listener);
+}
+
+/**
  * Emits an event of single record deletion.
  * @param obj - The object to delete the record from.
  * @param prop - Name of the target property.
