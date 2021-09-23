@@ -6,7 +6,8 @@ describe('function `toDBDataType`', () => {
     expect(mapper.toDBDataType('bool?')).toBe('BOOL');
   });
 
-  it('should return DynamoDB `Array` for `bool` array & set', () => {
+  it('should return DynamoDB `List` for `bool` array & set, array of `int`, '
+    + '`double`, `decimal`, and `string`', () => {
     expect(mapper.toDBDataType('bool[]')).toBe('L');
     expect(mapper.toDBDataType('bool<>')).toBe('L');
   });
@@ -18,11 +19,9 @@ describe('function `toDBDataType`', () => {
     expect(mapper.toDBDataType('double?')).toBe('N');
   });
 
-  it('should return DynamoDB `Number Set` for `int` & `double` array & set',
+  it('should return DynamoDB `Number Set` for `int` & `double` set',
     () => {
-      expect(mapper.toDBDataType('int[]')).toBe('NS');
       expect(mapper.toDBDataType('int<>')).toBe('NS');
-      expect(mapper.toDBDataType('double[]')).toBe('NS');
       expect(mapper.toDBDataType('double<>')).toBe('NS');
     });
 
@@ -35,9 +34,7 @@ describe('function `toDBDataType`', () => {
 
   it('should return DynamoDB `String Set` for `string` & `decimal` array & set',
     () => {
-      expect(mapper.toDBDataType('string[]')).toBe('SS');
       expect(mapper.toDBDataType('string<>')).toBe('SS');
-      expect(mapper.toDBDataType('decimal[]')).toBe('SS');
       expect(mapper.toDBDataType('decimal<>')).toBe('SS');
     });
 });

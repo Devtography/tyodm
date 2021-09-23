@@ -19,21 +19,21 @@ function toDBDataType(type: PropType): keyof AttributeValue {
       return 'BOOL';
     case ('bool[]'):
     case ('bool<>'):
+    case ('int[]'):
+    case ('double[]'):
+    case ('decimal[]'):
+    case ('string[]'):
       return 'L';
     case ('int'):
     case ('double'):
       return 'N';
-    case ('int[]'):
     case ('int<>'):
-    case ('double[]'):
     case ('double<>'):
       return 'NS';
     case ('string'):
     case ('decimal'):
       return 'S';
-    case ('string[]'):
     case ('string<>'):
-    case ('decimal[]'):
     case ('decimal<>'):
       return 'SS';
     default:
