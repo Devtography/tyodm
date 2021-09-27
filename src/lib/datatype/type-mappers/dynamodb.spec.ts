@@ -90,7 +90,11 @@ describe('function `mapper.assignValToObjProp`', () => {
 
   it('should assign a `int[]` to target property', () => {
     expect(() => {
-      mapper.assignValToObjProp({ NS: ['1', '1', '3'] }, 'int[]', obj, 'prop');
+      mapper.assignValToObjProp(
+        {
+          L: [{ N: '1' }, { N: '1' }, { N: '3' }],
+        }, 'int[]', obj, 'prop',
+      );
     }).not.toThrow();
 
     expect(obj.prop).toEqual([1, 1, 3]);
@@ -98,8 +102,10 @@ describe('function `mapper.assignValToObjProp`', () => {
 
   it('should assign a `double[]` to target property', () => {
     expect(() => {
-      mapper.assignValToObjProp({ NS: ['1.01', '2.02', '3.33'] },
-        'double[]', obj, 'prop');
+      mapper.assignValToObjProp(
+        { L: [{ N: '1.01' }, { N: '2.02' }, { N: '3.33' }] },
+        'double[]', obj, 'prop',
+      );
     }).not.toThrow();
 
     expect(obj.prop).toEqual([1.01, 2.02, 3.33]);
@@ -134,7 +140,7 @@ describe('function `mapper.assignValToObjProp`', () => {
   it('should assign a `decimal[]` to target property', () => {
     expect(() => {
       mapper.assignValToObjProp(
-        { SS: ['1.1234567890', '2.23456789', '3.3456789'] },
+        { L: [{ S: '1.1234567890' }, { S: '2.23456789' }, { S: '3.3456789' }] },
         'decimal[]', obj, 'prop',
       );
     }).not.toThrow();
@@ -161,8 +167,10 @@ describe('function `mapper.assignValToObjProp`', () => {
 
   it('should assign a `string[]` to target property', () => {
     expect(() => {
-      mapper.assignValToObjProp({ SS: ['a', 'b', 'b'] },
-        'string[]', obj, 'prop');
+      mapper.assignValToObjProp(
+        { L: [{ S: 'a' }, { S: 'b' }, { S: 'b' }] },
+        'string[]', obj, 'prop',
+      );
     }).not.toThrow();
 
     expect(obj.prop).toEqual(['a', 'b', 'b']);

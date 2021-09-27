@@ -58,58 +58,46 @@ function assignValToObjProp(
 
   if (propType.slice(-1) === '?') { propType = propType.slice(0, -1); }
 
-  switch (propType) {
-    case ('bool'):
-      obj[key] = val.BOOL!;
-      break;
-    case ('bool[]'):
-    case ('bool<>'): {
-      const list = val.L!;
-      const arr: boolean[] = [];
-      list.forEach((elm) => {
+  const listTypes = ['bool<>', 'bool[]', 'int[]', 'double[]',
+    'decimal[]', 'string[]'];
+
+  if (propType === 'bool') {
+    obj[key] = val.BOOL;
+  } else if (propType === 'int') {
+    obj[key] = parseInt(val.N!, 10);
+  } else if (propType === 'double') {
+    obj[key] = parseFloat(val.N!);
+  } else if (propType === 'int<>' || propType === 'double<>') {
+    obj[key] = new Set(val.NS!.map(Number));
+  } else if (propType === 'decimal') {
+    obj[key] = parseFloat(val.S!);
+  } else if (propType === 'string') {
+    obj[key] = val.S;
+  } else if (propType === 'string<>') {
+    obj[key] = new Set(val.SS);
+  } else if (listTypes.includes(propType)) {
+    const list = val.L!;
+    const arr: Array<boolean | number | string> = [];
+
+    list.forEach((elm) => {
+      if (propType === 'bool<>' || propType === 'bool[]') {
         arr.push(elm.BOOL!);
-      });
-      if (propType === 'bool[]') {
-        obj[key] = arr;
-      } else {
-        obj[key] = new Set(arr);
+      } else if (propType === 'int[]') {
+        arr.push(parseInt(elm.N!, 10));
+      } else if (propType === 'double[]') {
+        arr.push(parseFloat(elm.N!));
+      } else if (propType === 'decimal[]') {
+        arr.push(parseFloat(elm.S!));
+      } else if (propType === 'string[]') {
+        arr.push(elm.S!);
       }
-      break;
+    });
+
+    if (propType === 'bool<>') {
+      obj[key] = new Set(arr);
+    } else {
+      obj[key] = arr;
     }
-    case ('int'):
-      obj[key] = parseInt(val.N!, 10);
-      break;
-    case ('double'):
-      obj[key] = parseFloat(val.N!);
-      break;
-    case ('int[]'):
-    case ('double[]'):
-      obj[key] = val.NS!.map(Number);
-      break;
-    case ('int<>'):
-    case ('double<>'):
-      obj[key] = new Set(val.NS!.map(Number));
-      break;
-    case ('decimal'):
-      obj[key] = parseFloat(val.S!);
-      break;
-    case ('decimal[]'):
-      obj[key] = val.SS!.map(Number);
-      break;
-    case ('decimal<>'):
-      obj[key] = new Set(val.SS!.map(Number));
-      break;
-    case ('string'):
-      obj[key] = val.S!;
-      break;
-    case ('string[]'):
-      obj[key] = val.SS!;
-      break;
-    case ('string<>'):
-      obj[key] = new Set(val.SS);
-      break;
-    default:
-      break;
   }
 }
 
