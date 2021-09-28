@@ -32,8 +32,8 @@ const commonObj = new MockObj(objId);
 commonObj.meta = { objName: 'mock', objRank: 1 };
 commonObj.row1 = { subObj: { prop1: [1, 2] } };
 commonObj.collection = new Map([
-  [colId1, { collectionId: colId1, sampleSet: [1, 2] }],
-  [colId2, { collectionId: colId2, sampleSet: [1, 2] }],
+  [colId1, { collectionId: colId1, sampleIntArr: [1, 2] }],
+  [colId2, { collectionId: colId2, sampleIntArr: [1, 2] }],
 ]);
 
 describe('function `attach` & `detach`', () => {
@@ -83,7 +83,7 @@ describe('test with DynamoDB', () => {
             Item: {
               pk: { S: `${MockObj.name}#${objId}` },
               sk: { S: 'row1' },
-              subObj: { M: { prop1: { SS: ['1', '2'] } } },
+              subObj: { M: { prop1: { L: [{ S: '1' }, { S: '2' }] } } },
             },
             TableName: dynamoDBConfig.table,
           },
@@ -94,7 +94,7 @@ describe('test with DynamoDB', () => {
               pk: { S: `${MockObj.name}#${objId}` },
               sk: { S: `collection#${colId1}` },
               collectionId: { S: colId1 },
-              sampleSet: { NS: ['1', '2'] },
+              sampleIntArr: { L: [{ N: '1' }, { N: '2' }] },
             },
             TableName: dynamoDBConfig.table,
           },
@@ -105,7 +105,7 @@ describe('test with DynamoDB', () => {
               pk: { S: `${MockObj.name}#${objId}` },
               sk: { S: `collection#${colId2}` },
               collectionId: { S: colId2 },
-              sampleSet: { NS: ['1', '2'] },
+              sampleIntArr: { L: [{ N: '1' }, { N: '2' }] },
             },
             TableName: dynamoDBConfig.table,
           },
@@ -216,8 +216,8 @@ describe('test with DynamoDB', () => {
     const obj = new MockObj();
     obj.row1 = { subObj: { prop1: [1, 2] } };
     obj.collection = new Map([
-      [colId1, { collectionId: colId1, sampleSet: [1, 2] }],
-      [colId2, { collectionId: colId2, sampleSet: [1, 2] }],
+      [colId1, { collectionId: colId1, sampleIntArr: [1, 2] }],
+      [colId2, { collectionId: colId2, sampleIntArr: [1, 2] }],
     ]);
 
     beforeAll(async () => {
@@ -263,10 +263,10 @@ describe('test with DynamoDB', () => {
 
           await expect(odm.write(() => {
             obj.insertOne('collection',
-              { collectionId: colId, sampleSet: [0, 1] });
+              { collectionId: colId, sampleIntArr: [0, 1] });
           })).resolves.not.toThrow();
 
-          expect(obj.collection!.get(colId)!.sampleSet).toEqual([0, 1]);
+          expect(obj.collection!.get(colId)!.sampleIntArr).toEqual([0, 1]);
 
           const result = await client.send(new GetItemCommand({
             Key: {
@@ -280,7 +280,7 @@ describe('test with DynamoDB', () => {
             pk: { S: `${MockObj.SCHEMA.name}#${obj.objectId}` },
             sk: { S: `collection#${colId}` },
             collectionId: { S: colId },
-            sampleSet: { NS: ['0', '1'] },
+            sampleIntArr: { L: [{ N: '0' }, { N: '1' }] },
           });
         });
 
@@ -358,10 +358,10 @@ describe('test with DynamoDB', () => {
         + '& database', async () => {
         await expect(odm.write(() => {
           commonObj.updateOne('collection',
-            { sampleSet: [0, 1] }, colId1);
+            { sampleIntArr: [0, 1] }, colId1);
         })).resolves.not.toThrow();
 
-        expect(commonObj.collection!.get(colId1)!.sampleSet).toEqual([0, 1]);
+        expect(commonObj.collection!.get(colId1)!.sampleIntArr).toEqual([0, 1]);
 
         const result = await client.send(new GetItemCommand({
           Key: {
@@ -372,7 +372,9 @@ describe('test with DynamoDB', () => {
         }));
 
         expect(result.Item).not.toBeUndefined();
-        expect(result.Item!.sampleSet).toEqual({ NS: ['0', '1'] });
+        expect(result.Item!.sampleIntArr).toEqual(
+          { L: [{ N: '0' }, { N: '1' }] },
+        );
       });
 
       afterAll(async () => {

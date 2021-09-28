@@ -1,3 +1,4 @@
+/* eslint-disable object-property-newline */
 import { ulid } from 'ulid';
 import { Obj } from '../lib/object';
 import { Schema } from '../lib/schema';
@@ -12,7 +13,21 @@ class MockObj extends Obj {
       collection: {
         type: 'collection',
         identifier: 'collectionId',
-        attr: { collectionId: 'string', sampleSet: 'int[]' },
+        attr: { collectionId: 'string', sampleIntArr: 'int[]' },
+      },
+      sample: {
+        type: 'single',
+        attr: {
+          sampleBool: 'bool', sampleBoolArr: 'bool[]', sampleBoolSet: 'bool<>',
+          sampleInt: 'int', sampleIntArr: 'int[]', sampleIntSet: 'int<>',
+          sampleDouble: 'double', sampleDoubleArr: 'double[]',
+          sampleDoubleSet: 'double<>',
+          sampleDecimal: 'decimal', sampleDecimalArr: 'decimal[]',
+          sampleDecimalSet: 'decimal<>',
+          sampleStr: 'string', sampleStrArr: 'string[]',
+          sampleStrSet: 'string<>',
+          sampleOptional: 'string?',
+        },
       },
     },
   };
@@ -20,7 +35,17 @@ class MockObj extends Obj {
   ulid: string;
   meta?: { objName: string, objRank?: number };
   row1?: { subObj: { prop1: number[] } };
-  collection?: Map<string, { collectionId: string, sampleSet: number[] }>;
+  collection?: Map<string, { collectionId: string, sampleIntArr: number[] }>;
+  sample?: {
+    sampleBool: boolean, sampleBoolArr: boolean[], sampleBoolSet: Set<boolean>,
+    sampleInt: number, sampleIntArr: number[], sampleIntSet: Set<number>,
+    sampleDouble: number, sampleDoubleArr: number[],
+    sampleDoubleSet: Set<number>,
+    sampleDecimal: number, sampleDecimalArr: number[],
+    sampleDecimalSet: Set<number>,
+    sampleStr: string, sampleStrArr: string[], sampleStrSet: Set<string>,
+    sampleOptional?: string,
+  };
 
   constructor(objId?: string) {
     super(objId);

@@ -1,3 +1,4 @@
+/* eslint-disable object-property-newline */
 import {
   CreateTableCommand,
   DeleteTableCommand,
@@ -64,8 +65,8 @@ describe('function `getObjByKey`', () => {
     obj.meta = { objName: 'mocker' };
     obj.row1 = { subObj: { prop1: [1, 2, 3] } };
     obj.collection = new Map([
-      [ulid1, { collectionId: ulid1, sampleSet: [1, 3, 5, 7] }],
-      [ulid2, { collectionId: ulid2, sampleSet: [2, 4, 6, 8] }],
+      [ulid1, { collectionId: ulid1, sampleIntArr: [1, 3, 5, 7] }],
+      [ulid2, { collectionId: ulid2, sampleIntArr: [2, 4, 6, 8] }],
     ]);
 
     driver.insertObj(obj);
@@ -89,8 +90,8 @@ describe('function `insertObj`', () => {
     obj.meta = { objName: 'mocker' };
     obj.row1 = { subObj: { prop1: [1, 2, 3] } };
     obj.collection = new Map([
-      [ulid1, { collectionId: ulid1, sampleSet: [1, 3, 5, 7] }],
-      [ulid2, { collectionId: ulid2, sampleSet: [2, 4, 6, 8] }],
+      [ulid1, { collectionId: ulid1, sampleIntArr: [1, 3, 5, 7] }],
+      [ulid2, { collectionId: ulid2, sampleIntArr: [2, 4, 6, 8] }],
     ]);
 
     expect(() => { driver.insertObj(obj); }).not.toThrow();
@@ -110,7 +111,9 @@ describe('function `insertObj`', () => {
           Item: {
             pk: { S: `MockObj#${obj.objectId}` },
             sk: { S: 'row1' },
-            subObj: { M: { prop1: { SS: ['1', '2', '3'] } } },
+            subObj: {
+              M: { prop1: { L: [{ S: '1' }, { S: '2' }, { S: '3' }] } },
+            },
           },
           TableName: 'default',
         },
@@ -121,7 +124,9 @@ describe('function `insertObj`', () => {
             pk: { S: `MockObj#${obj.objectId}` },
             sk: { S: `collection#${ulid1}` },
             collectionId: { S: ulid1 },
-            sampleSet: { NS: ['1', '3', '5', '7'] },
+            sampleIntArr: {
+              L: [{ N: '1' }, { N: '3' }, { N: '5' }, { N: '7' }],
+            },
           },
           TableName: 'default',
         },
@@ -132,7 +137,9 @@ describe('function `insertObj`', () => {
             pk: { S: `MockObj#${obj.objectId}` },
             sk: { S: `collection#${ulid2}` },
             collectionId: { S: ulid2 },
-            sampleSet: { NS: ['2', '4', '6', '8'] },
+            sampleIntArr: {
+              L: [{ N: '2' }, { N: '4' }, { N: '6' }, { N: '8' }],
+            },
           },
           TableName: 'default',
         },
@@ -193,7 +200,7 @@ describe('function `update`', () => {
           Key: { pk: { S: 'MockObj#1' }, sk: { S: 'row1' } },
           UpdateExpression: 'set subObj.prop1=:subObj_prop1',
           ExpressionAttributeValues: {
-            ':subObj_prop1': { SS: ['1', '2', '3'] },
+            ':subObj_prop1': { L: [{ S: '1' }, { S: '2' }, { S: '3' }] },
           },
           TableName: 'default',
         },
@@ -235,7 +242,7 @@ describe('function `update`', () => {
       {
         pk: { S: `${MockObj.name}#${obj.objectId}` },
         sk: { S: 'row1' },
-        subObj: { M: { prop1: { SS: ['1', '2', '3'] } } },
+        subObj: { M: { prop1: { L: [{ S: '1' }, { S: '2' }, { S: '3' }] } } },
       },
     ]);
     expect(1).toEqual(1);
@@ -269,12 +276,25 @@ describe('function `commitWriteTransaction`', () => {
     const obj1 = new MockObj();
     obj1.meta = { objName: 'obj1', objRank: 1 };
     obj1.row1 = { subObj: { prop1: [-1.0387, 0.00001, 1.357] } };
+    obj1.sample = {
+      sampleBool: true, sampleBoolArr: [true, true],
+      sampleBoolSet: new Set([true, false]),
+      sampleInt: 0, sampleIntArr: [-1, 0, 0], sampleIntSet: new Set([0, 1]),
+      sampleDouble: 3.1417, sampleDoubleArr: [-3.33, 0.2, 0.2],
+      sampleDoubleSet: new Set([-3.33, 1.11, 2.22]),
+      sampleDecimal: 0.0987654321,
+      sampleDecimalArr: [0.0987654321, 0.0987654321],
+      sampleDecimalSet: new Set([0.0987654321, 0.123456789]),
+      sampleStr: 'sample', sampleStrArr: ['a', 'a', 'b', 'b'],
+      sampleStrSet: new Set(['a', 'b']),
+      sampleOptional: 'optional',
+    };
 
     const obj2 = new MockObj();
     obj2.meta = { objName: 'obj2' };
     obj2.collection = new Map([
-      ['1', { collectionId: '1', sampleSet: [-1, 0, 1] }],
-      ['2', { collectionId: '2', sampleSet: [0, -2, 1000] }],
+      ['1', { collectionId: '1', sampleIntArr: [-1, 0, 1] }],
+      ['2', { collectionId: '2', sampleIntArr: [0, -2, 1000] }],
     ]);
 
     expect(() => { driver.insertObj(obj1); }).not.toThrow();
@@ -289,8 +309,8 @@ describe('function `commitWriteTransaction`', () => {
       },
     }));
 
-    expect(obj1Results.Count).toBe(2);
-    expect(obj1Results.ScannedCount).toBe(2);
+    expect(obj1Results.Count).toBe(3);
+    expect(obj1Results.ScannedCount).toBe(3);
     expect(obj1Results.Items).toEqual([
       {
         pk: { S: `MockObj#${obj1.objectId}` },
@@ -301,7 +321,35 @@ describe('function `commitWriteTransaction`', () => {
       {
         pk: { S: `MockObj#${obj1.objectId}` },
         sk: { S: 'row1' },
-        subObj: { M: { prop1: { SS: ['-1.0387', '0.00001', '1.357'] } } },
+        subObj: {
+          M: {
+            prop1: { L: [{ S: '-1.0387' }, { S: '0.00001' }, { S: '1.357' }] },
+          },
+        },
+      },
+      {
+        pk: { S: `MockObj#${obj1.objectId}` },
+        sk: { S: 'sample' },
+        sampleBool: { BOOL: true },
+        sampleBoolArr: { L: [{ BOOL: true }, { BOOL: true }] },
+        sampleBoolSet: { L: [{ BOOL: true }, { BOOL: false }] },
+        sampleInt: { N: '0' },
+        sampleIntArr: { L: [{ N: '-1' }, { N: '0' }, { N: '0' }] },
+        sampleIntSet: { NS: ['0', '1'] },
+        sampleDouble: { N: '3.1417' },
+        sampleDoubleArr: { L: [{ N: '-3.33' }, { N: '0.2' }, { N: '0.2' }] },
+        sampleDoubleSet: { NS: ['-3.33', '1.11', '2.22'] },
+        sampleDecimal: { S: '0.0987654321' },
+        sampleDecimalArr: {
+          L: [{ S: '0.0987654321' }, { S: '0.0987654321' }],
+        },
+        sampleDecimalSet: {
+          SS: ['0.0987654321', '0.123456789'],
+        },
+        sampleStr: { S: 'sample' },
+        sampleStrArr: { L: [{ S: 'a' }, { S: 'a' }, { S: 'b' }, { S: 'b' }] },
+        sampleStrSet: { SS: ['a', 'b'] },
+        sampleOptional: { S: 'optional' },
       },
     ]);
 
@@ -320,13 +368,13 @@ describe('function `commitWriteTransaction`', () => {
         pk: { S: `MockObj#${obj2.objectId}` },
         sk: { S: 'collection#1' },
         collectionId: { S: '1' },
-        sampleSet: { NS: ['-1', '0', '1'] },
+        sampleIntArr: { L: [{ N: '-1' }, { N: '0' }, { N: '1' }] },
       },
       {
         pk: { S: `MockObj#${obj2.objectId}` },
         sk: { S: 'collection#2' },
         collectionId: { S: '2' },
-        sampleSet: { NS: ['-2', '0', '1000'] },
+        sampleIntArr: { L: [{ N: '0' }, { N: '-2' }, { N: '1000' }] },
       },
       {
         pk: { S: `MockObj#${obj2.objectId}` },
@@ -342,12 +390,12 @@ describe('function `commitWriteTransaction`', () => {
     obj.row1 = { subObj: { prop1: [-1, 0, 1] } };
     obj.collection = new Map((() => {
       const result: Array<[
-        string, { collectionId: string, sampleSet: number[] },
+        string, { collectionId: string, sampleIntArr: number[] },
       ]> = [];
 
       for (let i = 0; i < 25; i += 1) {
         result.push(
-          [i.toString(), { collectionId: i.toString(), sampleSet: [0] }],
+          [i.toString(), { collectionId: i.toString(), sampleIntArr: [0] }],
         );
       }
 
@@ -375,20 +423,50 @@ describe('function `cancelTransaction`', () => {
 describe('function `buildPutTransactionWriteItem`', () => {
   it('should return `TransactWriteItem` for object passed in', () => {
     const obj = new MockObj();
-    obj.meta = { objName: 'sampleObj', objRank: 1 };
+    obj.sample = {
+      sampleBool: true, sampleBoolArr: [true, true],
+      sampleBoolSet: new Set([true, false]),
+      sampleInt: 0, sampleIntArr: [-1, 0, 0], sampleIntSet: new Set([0, 1]),
+      sampleDouble: 3.1417, sampleDoubleArr: [-3.33, 0.2, 0.2],
+      sampleDoubleSet: new Set([-3.33, 1.11, 2.22]),
+      sampleDecimal: 0.0987654321,
+      sampleDecimalArr: [0.0987654321, 0.0987654321],
+      sampleDecimalSet: new Set([0.0987654321, 0.123456789]),
+      sampleStr: 'sample', sampleStrArr: ['a', 'a', 'b', 'b'],
+      sampleStrSet: new Set(['a', 'b']),
+      sampleOptional: 'optional',
+    };
 
     const item = driver.buildPutTransactWriteItem(
-      `${MockObj.name}#${obj.objectId}`, 'meta',
-      obj.meta, obj.objectSchema().props.meta.attr,
+      `${MockObj.name}#${obj.objectId}`, 'sample',
+      obj.sample, obj.objectSchema().props.sample.attr,
     );
 
     expect(item).toEqual({
       Put: {
         Item: {
           pk: { S: `MockObj#${obj.ulid}` },
-          sk: { S: 'meta' },
-          objName: { S: 'sampleObj' },
-          objRank: { N: '1' },
+          sk: { S: 'sample' },
+          sampleBool: { BOOL: true },
+          sampleBoolArr: { L: [{ BOOL: true }, { BOOL: true }] },
+          sampleBoolSet: { L: [{ BOOL: true }, { BOOL: false }] },
+          sampleInt: { N: '0' },
+          sampleIntArr: { L: [{ N: '-1' }, { N: '0' }, { N: '0' }] },
+          sampleIntSet: { NS: ['0', '1'] },
+          sampleDouble: { N: '3.1417' },
+          sampleDoubleArr: { L: [{ N: '-3.33' }, { N: '0.2' }, { N: '0.2' }] },
+          sampleDoubleSet: { NS: ['-3.33', '1.11', '2.22'] },
+          sampleDecimal: { S: '0.0987654321' },
+          sampleDecimalArr: {
+            L: [{ S: '0.0987654321' }, { S: '0.0987654321' }],
+          },
+          sampleDecimalSet: {
+            SS: ['0.0987654321', '0.123456789'],
+          },
+          sampleStr: { S: 'sample' },
+          sampleStrArr: { L: [{ S: 'a' }, { S: 'a' }, { S: 'b' }, { S: 'b' }] },
+          sampleStrSet: { SS: ['a', 'b'] },
+          sampleOptional: { S: 'optional' },
         },
         TableName: 'default',
       },
@@ -409,7 +487,11 @@ describe('function `buildPutTransactionWriteItem`', () => {
         Item: {
           pk: { S: `MockObj#${obj.ulid}` },
           sk: { S: 'row1' },
-          subObj: { M: { prop1: { SS: ['1', '2', '3', '4'] } } },
+          subObj: {
+            M: {
+              prop1: { L: [{ S: '1' }, { S: '2' }, { S: '3' }, { S: '4' }] },
+            },
+          },
         },
         TableName: 'default',
       },
