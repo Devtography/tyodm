@@ -6,9 +6,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.1.0-rc.3] - 2021-09-29
+
+### Added
+- Short sample of `TyODM` usage with Amazon DynamoDB in [README#Getting started].
+
+### Changed
+- Moved usage of custom constructor from the code snippet of [README#Getting started]
+  to [README#Custom identifier & constructor].
+
 ### Fixed
 - Issue of incorrect mapping of array type `TyODM` objects to Amazon DynamoDB
   data type by mapping those to DynamoDB `List` instead of `Sets`. 
+
 ## [0.1.0-rc.2] - 2021-09-21
 
 ### Added
@@ -51,9 +61,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Currently not functional. Just publishing partial components & APIs layout of
   the package.
 
+[README#Getting started]: https://github.com/Devtography/tyodm/blob/master/README.md#getter-started
+[README#Custom identifier & constructor]: https://github.com/Devtography/tyodm/blob/master/README.md#custom-identifier--constructor
 [README#Identifier]: https://github.com/Devtography/tyodm/blob/0.1.0-rc.2/README.md#identifier
 
-[Unreleased]: https://github.com/Devtography/tyodm/0.1.0-rc.2...HEAD
-[0.1.0-rc.2]: https://github.com/Devtography/tyodm/releases/tag/0.2.0-rc.2
+[Unreleased]: https://github.com/Devtography/tyodm/0.1.0-rc.3...HEAD
+[0.1.0-rc.3]: https://github.com/Devtography/tyodm/releases/tag/0.1.0-rc.3
+[0.1.0-rc.2]: https://github.com/Devtography/tyodm/releases/tag/0.1.0-rc.2
 [0.1.0-rc.1]: https://github.com/Devtography/tyodm/releases/tag/0.1.0-rc.1
 [0.1.0-rc.0]: https://github.com/Devtography/tyodm/releases/tag/0.1.0-rc.0
