@@ -276,6 +276,19 @@ describe('function `commitWriteTransaction`', () => {
     const obj1 = new MockObj();
     obj1.meta = { objName: 'obj1', objRank: 1 };
     obj1.row1 = { subObj: { prop1: [-1.0387, 0.00001, 1.357] } };
+    obj1.sample = {
+      sampleBool: true, sampleBoolArr: [true, true],
+      sampleBoolSet: new Set([true, false]),
+      sampleInt: 0, sampleIntArr: [-1, 0, 0], sampleIntSet: new Set([0, 1]),
+      sampleDouble: 3.1417, sampleDoubleArr: [-3.33, 0.2, 0.2],
+      sampleDoubleSet: new Set([-3.33, 1.11, 2.22]),
+      sampleDecimal: 0.0987654321,
+      sampleDecimalArr: [0.0987654321, 0.0987654321],
+      sampleDecimalSet: new Set([0.0987654321, 0.123456789]),
+      sampleStr: 'sample', sampleStrArr: ['a', 'a', 'b', 'b'],
+      sampleStrSet: new Set(['a', 'b']),
+      sampleOptional: 'optional',
+    };
 
     const obj2 = new MockObj();
     obj2.meta = { objName: 'obj2' };
@@ -296,8 +309,8 @@ describe('function `commitWriteTransaction`', () => {
       },
     }));
 
-    expect(obj1Results.Count).toBe(2);
-    expect(obj1Results.ScannedCount).toBe(2);
+    expect(obj1Results.Count).toBe(3);
+    expect(obj1Results.ScannedCount).toBe(3);
     expect(obj1Results.Items).toEqual([
       {
         pk: { S: `MockObj#${obj1.objectId}` },
@@ -313,6 +326,30 @@ describe('function `commitWriteTransaction`', () => {
             prop1: { L: [{ S: '-1.0387' }, { S: '0.00001' }, { S: '1.357' }] },
           },
         },
+      },
+      {
+        pk: { S: `MockObj#${obj1.objectId}` },
+        sk: { S: 'sample' },
+        sampleBool: { BOOL: true },
+        sampleBoolArr: { L: [{ BOOL: true }, { BOOL: true }] },
+        sampleBoolSet: { L: [{ BOOL: true }, { BOOL: false }] },
+        sampleInt: { N: '0' },
+        sampleIntArr: { L: [{ N: '-1' }, { N: '0' }, { N: '0' }] },
+        sampleIntSet: { NS: ['0', '1'] },
+        sampleDouble: { N: '3.1417' },
+        sampleDoubleArr: { L: [{ N: '-3.33' }, { N: '0.2' }, { N: '0.2' }] },
+        sampleDoubleSet: { NS: ['-3.33', '1.11', '2.22'] },
+        sampleDecimal: { S: '0.0987654321' },
+        sampleDecimalArr: {
+          L: [{ S: '0.0987654321' }, { S: '0.0987654321' }],
+        },
+        sampleDecimalSet: {
+          SS: ['0.0987654321', '0.123456789'],
+        },
+        sampleStr: { S: 'sample' },
+        sampleStrArr: { L: [{ S: 'a' }, { S: 'a' }, { S: 'b' }, { S: 'b' }] },
+        sampleStrSet: { SS: ['a', 'b'] },
+        sampleOptional: { S: 'optional' },
       },
     ]);
 
