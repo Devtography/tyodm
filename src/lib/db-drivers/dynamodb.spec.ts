@@ -64,8 +64,8 @@ describe('function `getObjByKey`', () => {
     obj.meta = { objName: 'mocker' };
     obj.row1 = { subObj: { prop1: [1, 2, 3] } };
     obj.collection = new Map([
-      [ulid1, { collectionId: ulid1, sampleSet: [1, 3, 5, 7] }],
-      [ulid2, { collectionId: ulid2, sampleSet: [2, 4, 6, 8] }],
+      [ulid1, { collectionId: ulid1, sampleIntArr: [1, 3, 5, 7] }],
+      [ulid2, { collectionId: ulid2, sampleIntArr: [2, 4, 6, 8] }],
     ]);
 
     driver.insertObj(obj);
@@ -89,8 +89,8 @@ describe('function `insertObj`', () => {
     obj.meta = { objName: 'mocker' };
     obj.row1 = { subObj: { prop1: [1, 2, 3] } };
     obj.collection = new Map([
-      [ulid1, { collectionId: ulid1, sampleSet: [1, 3, 5, 7] }],
-      [ulid2, { collectionId: ulid2, sampleSet: [2, 4, 6, 8] }],
+      [ulid1, { collectionId: ulid1, sampleIntArr: [1, 3, 5, 7] }],
+      [ulid2, { collectionId: ulid2, sampleIntArr: [2, 4, 6, 8] }],
     ]);
 
     expect(() => { driver.insertObj(obj); }).not.toThrow();
@@ -123,7 +123,9 @@ describe('function `insertObj`', () => {
             pk: { S: `MockObj#${obj.objectId}` },
             sk: { S: `collection#${ulid1}` },
             collectionId: { S: ulid1 },
-            sampleSet: { L: [{ N: '1' }, { N: '3' }, { N: '5' }, { N: '7' }] },
+            sampleIntArr: {
+              L: [{ N: '1' }, { N: '3' }, { N: '5' }, { N: '7' }],
+            },
           },
           TableName: 'default',
         },
@@ -134,7 +136,9 @@ describe('function `insertObj`', () => {
             pk: { S: `MockObj#${obj.objectId}` },
             sk: { S: `collection#${ulid2}` },
             collectionId: { S: ulid2 },
-            sampleSet: { L: [{ N: '2' }, { N: '4' }, { N: '6' }, { N: '8' }] },
+            sampleIntArr: {
+              L: [{ N: '2' }, { N: '4' }, { N: '6' }, { N: '8' }],
+            },
           },
           TableName: 'default',
         },
@@ -275,8 +279,8 @@ describe('function `commitWriteTransaction`', () => {
     const obj2 = new MockObj();
     obj2.meta = { objName: 'obj2' };
     obj2.collection = new Map([
-      ['1', { collectionId: '1', sampleSet: [-1, 0, 1] }],
-      ['2', { collectionId: '2', sampleSet: [0, -2, 1000] }],
+      ['1', { collectionId: '1', sampleIntArr: [-1, 0, 1] }],
+      ['2', { collectionId: '2', sampleIntArr: [0, -2, 1000] }],
     ]);
 
     expect(() => { driver.insertObj(obj1); }).not.toThrow();
@@ -326,13 +330,13 @@ describe('function `commitWriteTransaction`', () => {
         pk: { S: `MockObj#${obj2.objectId}` },
         sk: { S: 'collection#1' },
         collectionId: { S: '1' },
-        sampleSet: { L: [{ N: '-1' }, { N: '0' }, { N: '1' }] },
+        sampleIntArr: { L: [{ N: '-1' }, { N: '0' }, { N: '1' }] },
       },
       {
         pk: { S: `MockObj#${obj2.objectId}` },
         sk: { S: 'collection#2' },
         collectionId: { S: '2' },
-        sampleSet: { L: [{ N: '0' }, { N: '-2' }, { N: '1000' }] },
+        sampleIntArr: { L: [{ N: '0' }, { N: '-2' }, { N: '1000' }] },
       },
       {
         pk: { S: `MockObj#${obj2.objectId}` },
@@ -348,12 +352,12 @@ describe('function `commitWriteTransaction`', () => {
     obj.row1 = { subObj: { prop1: [-1, 0, 1] } };
     obj.collection = new Map((() => {
       const result: Array<[
-        string, { collectionId: string, sampleSet: number[] },
+        string, { collectionId: string, sampleIntArr: number[] },
       ]> = [];
 
       for (let i = 0; i < 25; i += 1) {
         result.push(
-          [i.toString(), { collectionId: i.toString(), sampleSet: [0] }],
+          [i.toString(), { collectionId: i.toString(), sampleIntArr: [0] }],
         );
       }
 

@@ -12,7 +12,7 @@ class MockObj extends Obj {
       collection: {
         type: 'collection',
         identifier: 'collectionId',
-        attr: { collectionId: 'string', sampleSet: 'int[]' },
+        attr: { collectionId: 'string', sampleIntArr: 'int[]' },
       },
     },
   };
@@ -20,7 +20,7 @@ class MockObj extends Obj {
   ulid: string;
   meta?: { objName: string, objRank?: number };
   row1?: { subObj: { prop1: number[] } };
-  collection?: Map<string, { collectionId: string, sampleSet: number[] }>;
+  collection?: Map<string, { collectionId: string, sampleIntArr: number[] }>;
 
   constructor(objId?: string) {
     super(objId);
