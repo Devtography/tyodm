@@ -1,6 +1,6 @@
 {
   "name": "@devtography/tyodm",
-  "version": "0.1.0-rc.2",
+  "version": "0.1.0-rc.3",
   "description": "Fully typed ODM designed to work with various NoSQL database engines.",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
