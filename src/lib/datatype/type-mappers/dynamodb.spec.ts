@@ -6,7 +6,8 @@ describe('function `toDBDataType`', () => {
     expect(mapper.toDBDataType('bool?')).toBe('BOOL');
   });
 
-  it('should return DynamoDB `Array` for `bool` array & set', () => {
+  it('should return DynamoDB `List` for `bool` array & set, array of `int`, '
+    + '`double`, `decimal`, and `string`', () => {
     expect(mapper.toDBDataType('bool[]')).toBe('L');
     expect(mapper.toDBDataType('bool<>')).toBe('L');
   });
@@ -18,11 +19,9 @@ describe('function `toDBDataType`', () => {
     expect(mapper.toDBDataType('double?')).toBe('N');
   });
 
-  it('should return DynamoDB `Number Set` for `int` & `double` array & set',
+  it('should return DynamoDB `Number Set` for `int` & `double` set',
     () => {
-      expect(mapper.toDBDataType('int[]')).toBe('NS');
       expect(mapper.toDBDataType('int<>')).toBe('NS');
-      expect(mapper.toDBDataType('double[]')).toBe('NS');
       expect(mapper.toDBDataType('double<>')).toBe('NS');
     });
 
@@ -35,9 +34,7 @@ describe('function `toDBDataType`', () => {
 
   it('should return DynamoDB `String Set` for `string` & `decimal` array & set',
     () => {
-      expect(mapper.toDBDataType('string[]')).toBe('SS');
       expect(mapper.toDBDataType('string<>')).toBe('SS');
-      expect(mapper.toDBDataType('decimal[]')).toBe('SS');
       expect(mapper.toDBDataType('decimal<>')).toBe('SS');
     });
 });
@@ -93,7 +90,11 @@ describe('function `mapper.assignValToObjProp`', () => {
 
   it('should assign a `int[]` to target property', () => {
     expect(() => {
-      mapper.assignValToObjProp({ NS: ['1', '1', '3'] }, 'int[]', obj, 'prop');
+      mapper.assignValToObjProp(
+        {
+          L: [{ N: '1' }, { N: '1' }, { N: '3' }],
+        }, 'int[]', obj, 'prop',
+      );
     }).not.toThrow();
 
     expect(obj.prop).toEqual([1, 1, 3]);
@@ -101,8 +102,10 @@ describe('function `mapper.assignValToObjProp`', () => {
 
   it('should assign a `double[]` to target property', () => {
     expect(() => {
-      mapper.assignValToObjProp({ NS: ['1.01', '2.02', '3.33'] },
-        'double[]', obj, 'prop');
+      mapper.assignValToObjProp(
+        { L: [{ N: '1.01' }, { N: '2.02' }, { N: '3.33' }] },
+        'double[]', obj, 'prop',
+      );
     }).not.toThrow();
 
     expect(obj.prop).toEqual([1.01, 2.02, 3.33]);
@@ -137,7 +140,7 @@ describe('function `mapper.assignValToObjProp`', () => {
   it('should assign a `decimal[]` to target property', () => {
     expect(() => {
       mapper.assignValToObjProp(
-        { SS: ['1.1234567890', '2.23456789', '3.3456789'] },
+        { L: [{ S: '1.1234567890' }, { S: '2.23456789' }, { S: '3.3456789' }] },
         'decimal[]', obj, 'prop',
       );
     }).not.toThrow();
@@ -164,8 +167,10 @@ describe('function `mapper.assignValToObjProp`', () => {
 
   it('should assign a `string[]` to target property', () => {
     expect(() => {
-      mapper.assignValToObjProp({ SS: ['a', 'b', 'b'] },
-        'string[]', obj, 'prop');
+      mapper.assignValToObjProp(
+        { L: [{ S: 'a' }, { S: 'b' }, { S: 'b' }] },
+        'string[]', obj, 'prop',
+      );
     }).not.toThrow();
 
     expect(obj.prop).toEqual(['a', 'b', 'b']);

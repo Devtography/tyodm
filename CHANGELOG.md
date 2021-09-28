@@ -6,6 +6,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+- Issue of incorrect mapping of array type `TyODM` objects to Amazon DynamoDB
+  data type by mapping those to DynamoDB `List` instead of `Sets`. 
 ## [0.1.0-rc.2] - 2021-09-21
 
 ### Added

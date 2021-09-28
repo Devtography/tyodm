@@ -441,14 +441,23 @@ class DynamoDBDriver extends DBDriver {
   }
 
   private buildAttributeValue(
-    elm: unknown, propType: PropType,
+    elm: unknown, type: PropType,
   ): AttributeValue {
+    let propType: PropType = type.toLowerCase() as PropType;
+    if (propType.slice(-1) === '?') {
+      propType = propType.slice(0, -1) as PropType;
+    }
+
     const datatype = mapper.toDBDataType(propType);
     const attrVal: { [key: string]: unknown } = {};
 
     switch (datatype) {
       case ('S'):
-        attrVal[datatype] = elm as string;
+        if (propType === 'decimal') {
+          attrVal[datatype] = (elm as number).toString();
+        } else {
+          attrVal[datatype] = elm as string;
+        }
         break;
       case ('N'):
         attrVal[datatype] = (elm as number).toString();
@@ -457,40 +466,37 @@ class DynamoDBDriver extends DBDriver {
         attrVal[datatype] = elm as boolean;
         break;
       case ('SS'):
-        switch (propType) {
-          case ('decimal[]'):
-            attrVal[datatype] = (elm as number[]).map(String);
-            break;
-          case ('decimal<>'):
-            attrVal[datatype] = Array.from(
-              elm as Set<number>, (val) => val.toString(),
-            );
-            break;
-          case ('string[]'):
-            attrVal[datatype] = elm as string[];
-            break;
-          case ('string<>'):
-            attrVal[datatype] = elm as Set<string>;
-            break;
-          default: break;
-        }
-        break;
-      case ('NS'):
-        if (propType === 'int[]' || propType === 'double[]') {
-          attrVal[datatype] = (elm as number[]).map(String);
-        } else {
+        if (propType === 'decimal<>') {
           attrVal[datatype] = Array.from(
             elm as Set<number>, (val) => val.toString(),
           );
+        } else if (propType === 'string<>') {
+          attrVal[datatype] = Array.from(elm as Set<string>);
         }
+        break;
+      case ('NS'):
+        attrVal[datatype] = Array.from(
+          elm as Set<number>, (val) => val.toString(),
+        );
         break;
       case ('L'): {
         const arr: AttributeValue[] = [];
         if (propType === 'bool[]') {
           (elm as boolean[]).forEach((val) => { arr.push({ BOOL: val }); });
-        } else {
+        } else if (propType === 'bool<>') {
           (elm as Set<boolean>).forEach((val) => { arr.push({ BOOL: val }); });
+        } else if (propType === 'int[]' || propType === 'double[]') {
+          (elm as number[]).forEach((val) => {
+            arr.push({ N: val.toString() });
+          });
+        } else if (propType === 'decimal[]') {
+          (elm as number[]).forEach((val) => {
+            arr.push({ S: val.toString() });
+          });
+        } else if (propType === 'string[]') {
+          (elm as string[]).forEach((val) => { arr.push({ S: val }); });
         }
+        attrVal.L = arr;
         break;
       }
       default: break;
