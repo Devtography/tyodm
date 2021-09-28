@@ -83,7 +83,7 @@ describe('test with DynamoDB', () => {
             Item: {
               pk: { S: `${MockObj.name}#${objId}` },
               sk: { S: 'row1' },
-              subObj: { M: { prop1: { SS: ['1', '2'] } } },
+              subObj: { M: { prop1: { L: [{ S: '1' }, { S: '2' }] } } },
             },
             TableName: dynamoDBConfig.table,
           },
@@ -94,7 +94,7 @@ describe('test with DynamoDB', () => {
               pk: { S: `${MockObj.name}#${objId}` },
               sk: { S: `collection#${colId1}` },
               collectionId: { S: colId1 },
-              sampleSet: { NS: ['1', '2'] },
+              sampleSet: { L: [{ N: '1' }, { N: '2' }] },
             },
             TableName: dynamoDBConfig.table,
           },
@@ -105,7 +105,7 @@ describe('test with DynamoDB', () => {
               pk: { S: `${MockObj.name}#${objId}` },
               sk: { S: `collection#${colId2}` },
               collectionId: { S: colId2 },
-              sampleSet: { NS: ['1', '2'] },
+              sampleSet: { L: [{ N: '1' }, { N: '2' }] },
             },
             TableName: dynamoDBConfig.table,
           },
@@ -280,7 +280,7 @@ describe('test with DynamoDB', () => {
             pk: { S: `${MockObj.SCHEMA.name}#${obj.objectId}` },
             sk: { S: `collection#${colId}` },
             collectionId: { S: colId },
-            sampleSet: { NS: ['0', '1'] },
+            sampleSet: { L: [{ N: '0' }, { N: '1' }] },
           });
         });
 
@@ -372,7 +372,7 @@ describe('test with DynamoDB', () => {
         }));
 
         expect(result.Item).not.toBeUndefined();
-        expect(result.Item!.sampleSet).toEqual({ NS: ['0', '1'] });
+        expect(result.Item!.sampleSet).toEqual({ L: [{ N: '0' }, { N: '1' }] });
       });
 
       afterAll(async () => {

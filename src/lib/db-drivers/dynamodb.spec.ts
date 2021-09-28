@@ -110,7 +110,9 @@ describe('function `insertObj`', () => {
           Item: {
             pk: { S: `MockObj#${obj.objectId}` },
             sk: { S: 'row1' },
-            subObj: { M: { prop1: { SS: ['1', '2', '3'] } } },
+            subObj: {
+              M: { prop1: { L: [{ S: '1' }, { S: '2' }, { S: '3' }] } },
+            },
           },
           TableName: 'default',
         },
@@ -121,7 +123,7 @@ describe('function `insertObj`', () => {
             pk: { S: `MockObj#${obj.objectId}` },
             sk: { S: `collection#${ulid1}` },
             collectionId: { S: ulid1 },
-            sampleSet: { NS: ['1', '3', '5', '7'] },
+            sampleSet: { L: [{ N: '1' }, { N: '3' }, { N: '5' }, { N: '7' }] },
           },
           TableName: 'default',
         },
@@ -132,7 +134,7 @@ describe('function `insertObj`', () => {
             pk: { S: `MockObj#${obj.objectId}` },
             sk: { S: `collection#${ulid2}` },
             collectionId: { S: ulid2 },
-            sampleSet: { NS: ['2', '4', '6', '8'] },
+            sampleSet: { L: [{ N: '2' }, { N: '4' }, { N: '6' }, { N: '8' }] },
           },
           TableName: 'default',
         },
@@ -193,7 +195,7 @@ describe('function `update`', () => {
           Key: { pk: { S: 'MockObj#1' }, sk: { S: 'row1' } },
           UpdateExpression: 'set subObj.prop1=:subObj_prop1',
           ExpressionAttributeValues: {
-            ':subObj_prop1': { SS: ['1', '2', '3'] },
+            ':subObj_prop1': { L: [{ S: '1' }, { S: '2' }, { S: '3' }] },
           },
           TableName: 'default',
         },
@@ -235,7 +237,7 @@ describe('function `update`', () => {
       {
         pk: { S: `${MockObj.name}#${obj.objectId}` },
         sk: { S: 'row1' },
-        subObj: { M: { prop1: { SS: ['1', '2', '3'] } } },
+        subObj: { M: { prop1: { L: [{ S: '1' }, { S: '2' }, { S: '3' }] } } },
       },
     ]);
     expect(1).toEqual(1);
@@ -301,7 +303,11 @@ describe('function `commitWriteTransaction`', () => {
       {
         pk: { S: `MockObj#${obj1.objectId}` },
         sk: { S: 'row1' },
-        subObj: { M: { prop1: { SS: ['-1.0387', '0.00001', '1.357'] } } },
+        subObj: {
+          M: {
+            prop1: { L: [{ S: '-1.0387' }, { S: '0.00001' }, { S: '1.357' }] },
+          },
+        },
       },
     ]);
 
@@ -320,13 +326,13 @@ describe('function `commitWriteTransaction`', () => {
         pk: { S: `MockObj#${obj2.objectId}` },
         sk: { S: 'collection#1' },
         collectionId: { S: '1' },
-        sampleSet: { NS: ['-1', '0', '1'] },
+        sampleSet: { L: [{ N: '-1' }, { N: '0' }, { N: '1' }] },
       },
       {
         pk: { S: `MockObj#${obj2.objectId}` },
         sk: { S: 'collection#2' },
         collectionId: { S: '2' },
-        sampleSet: { NS: ['-2', '0', '1000'] },
+        sampleSet: { L: [{ N: '0' }, { N: '-2' }, { N: '1000' }] },
       },
       {
         pk: { S: `MockObj#${obj2.objectId}` },
@@ -409,7 +415,11 @@ describe('function `buildPutTransactionWriteItem`', () => {
         Item: {
           pk: { S: `MockObj#${obj.ulid}` },
           sk: { S: 'row1' },
-          subObj: { M: { prop1: { SS: ['1', '2', '3', '4'] } } },
+          subObj: {
+            M: {
+              prop1: { L: [{ S: '1' }, { S: '2' }, { S: '3' }, { S: '4' }] },
+            },
+          },
         },
         TableName: 'default',
       },
