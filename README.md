@@ -43,21 +43,14 @@ class SampleModel extends odm.Obj {
   };
   itemCollection?: Map<string, { itemId: string, name: string }>;
 
-  constructor(objId?: string) {
-    // Only constructor with optional parameters is allowed. 1st parameter
-    // must be an optional string and needs to be passed to the parent 
-    // constructor so the internal functions can set the `objectId` properly.
-    // Constructor with non optional parameters will result in runtime exception.
-    super(objId);
-
-    ...
-  }
-
   objectSchema(): Schema {
     return SampleModel.SCHEMA; // Expect to return the same schema from class.
   }
 }
 
+// Using DynamoDB as sample here.
+// A table with `pk` as `HASH` & `sk` as `RANGE` is needed to be created first
+// before connecting the `TyODM` instance to the target table.
 const odm = new odm.TyODM({
   region: 'us-east-2',
   endpoint: 'http://localhost:8000',
@@ -65,6 +58,26 @@ const odm = new odm.TyODM({
   schema: new Map<string, odm.Schema>([
     'SampleModel': SampleModel.SCHEMA,
   ]),
+});
+
+const obj = new SampleModel();
+obj.metadata = { name: 'Sample Object', active: true };
+obj.itemCollection = new Map([
+  ['1', { itemId: '1', name: 'item 1' }],
+  ['2', { itemId: '2', name: 'item 2' }],
+]);
+
+(async () => {
+  await odm.attach();
+
+  await odm.write(() => {
+    obj.insertObj();
+  });
+
+  const objFromDb = await odm.objectByKey(SampleModel, obj.objectId);
+  console.log(objFromDb);
+})().catch((err) => {
+  console.log(err);
 });
 ```
 
@@ -116,11 +129,11 @@ class Alpha extends odm.Obj {
 |                                  | subCat2#02A    | `'02A'`    | `7.62`        | `1`           |
 |                                  | subCat2#02B    | `'02B'`    | `0.45`        | `2`           |
 
-### __Identifier__
+### __Custom identifier & constructor__
 
 For the class/collection level unique identifier, by default there's an `ULID`
 generated for each instance on initialisation. Alternatively, a custom
-identifier can also be set as following:
+identifier can also be set via the constructor as following:
 
 ```typescript
 class Beta extends odm.Obj {
@@ -133,6 +146,10 @@ class Beta extends odm.Obj {
   customId: string;
 
   constructor(objId?: string) {
+    // Only constructor with optional parameters is allowed. 1st parameter
+    // must be an optional string and needs to be passed to the parent 
+    // constructor so the internal functions can set the `objectId` properly.
+    // Constructor with non optional parameters will result in runtime exception.
     super(objId);
 
     // It is important to assign value to your custom identifier here instead
