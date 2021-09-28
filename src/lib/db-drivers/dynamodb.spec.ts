@@ -1,3 +1,4 @@
+/* eslint-disable object-property-newline */
 import {
   CreateTableCommand,
   DeleteTableCommand,
@@ -385,20 +386,50 @@ describe('function `cancelTransaction`', () => {
 describe('function `buildPutTransactionWriteItem`', () => {
   it('should return `TransactWriteItem` for object passed in', () => {
     const obj = new MockObj();
-    obj.meta = { objName: 'sampleObj', objRank: 1 };
+    obj.sample = {
+      sampleBool: true, sampleBoolArr: [true, true],
+      sampleBoolSet: new Set([true, false]),
+      sampleInt: 0, sampleIntArr: [-1, 0, 0], sampleIntSet: new Set([0, 1]),
+      sampleDouble: 3.1417, sampleDoubleArr: [-3.33, 0.2, 0.2],
+      sampleDoubleSet: new Set([-3.33, 1.11, 2.22]),
+      sampleDecimal: 0.0987654321,
+      sampleDecimalArr: [0.0987654321, 0.0987654321],
+      sampleDecimalSet: new Set([0.0987654321, 0.123456789]),
+      sampleStr: 'sample', sampleStrArr: ['a', 'a', 'b', 'b'],
+      sampleStrSet: new Set(['a', 'b']),
+      sampleOptional: 'optional',
+    };
 
     const item = driver.buildPutTransactWriteItem(
-      `${MockObj.name}#${obj.objectId}`, 'meta',
-      obj.meta, obj.objectSchema().props.meta.attr,
+      `${MockObj.name}#${obj.objectId}`, 'sample',
+      obj.sample, obj.objectSchema().props.sample.attr,
     );
 
     expect(item).toEqual({
       Put: {
         Item: {
           pk: { S: `MockObj#${obj.ulid}` },
-          sk: { S: 'meta' },
-          objName: { S: 'sampleObj' },
-          objRank: { N: '1' },
+          sk: { S: 'sample' },
+          sampleBool: { BOOL: true },
+          sampleBoolArr: { L: [{ BOOL: true }, { BOOL: true }] },
+          sampleBoolSet: { L: [{ BOOL: true }, { BOOL: false }] },
+          sampleInt: { N: '0' },
+          sampleIntArr: { L: [{ N: '-1' }, { N: '0' }, { N: '0' }] },
+          sampleIntSet: { NS: ['0', '1'] },
+          sampleDouble: { N: '3.1417' },
+          sampleDoubleArr: { L: [{ N: '-3.33' }, { N: '0.2' }, { N: '0.2' }] },
+          sampleDoubleSet: { NS: ['-3.33', '1.11', '2.22'] },
+          sampleDecimal: { S: '0.0987654321' },
+          sampleDecimalArr: {
+            L: [{ S: '0.0987654321' }, { S: '0.0987654321' }],
+          },
+          sampleDecimalSet: {
+            SS: ['0.0987654321', '0.123456789'],
+          },
+          sampleStr: { S: 'sample' },
+          sampleStrArr: { L: [{ S: 'a' }, { S: 'a' }, { S: 'b' }, { S: 'b' }] },
+          sampleStrSet: { SS: ['a', 'b'] },
+          sampleOptional: { S: 'optional' },
         },
         TableName: 'default',
       },
