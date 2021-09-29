@@ -33,6 +33,9 @@ abstract class DBDriver {
    * @throws `InvalidPropertyError`
    * Thrown if any of the top level class property found other than the
    * identifier defined isn't an object.
+   * @throws `NaNError`
+   * Thrown if any value of the `decimal` types data (including set & array) is
+   * not a number.
    * @virtual
    */
   abstract insertObj<T extends Obj>(obj: T): void;
@@ -47,6 +50,9 @@ abstract class DBDriver {
    * @throws `InvalidSchemaError`
    * Thrown if `type` of any property is neither `'single'` nor `'collection'`,
    * or value of `identifier` is missing for type `'collection'`.
+   * @throws `NaNError`
+   * Thrown if any value of the `decimal` types data (including set & array) is
+   * not a number.
    * @virtual
    */
   abstract insertOne(

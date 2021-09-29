@@ -165,6 +165,9 @@ class DynamoDBDriver extends DBDriver {
    * @throws {@link InvalidPropertyError}
    * Thrown if any of the top level class property found other than the
    * identifier defined isn't an object.
+   * @throws {@link NaNError}
+   * Thrown if any value of the `decimal` types data (including set & array) is
+   * not a number.
    */
   insertObj<T extends Obj>(obj: T): void {
     Object.keys(obj).forEach((key) => {
@@ -249,6 +252,9 @@ class DynamoDBDriver extends DBDriver {
    * @throws {@link InvalidSchemaError}
    * Thrown if` type` of any property is neither `'single'` nor `'collection'`,
    * or value of `identifier` is missing for type `'collection'`.
+   * @throws {@link NaNError}
+   * Thrown if any value of the `decimal` types data (including set & array) is
+   * not a number.
    */
   insertOne(
     pk: string, elm: Record<string, unknown>,
@@ -393,6 +399,9 @@ class DynamoDBDriver extends DBDriver {
    * @returns The corresponding {@link TransactWriteItem}.
    * @throws {@link SchemaNotMatchError}
    * Thrown if any of the property in `elm` not found in `elmLayout`.
+   * @throws {@link NaNError}
+   * Thrown if any value of the `decimal` types data (including set & array) is
+   * not a number.
    * @internal
    */
   buildPutTransactWriteItem(
