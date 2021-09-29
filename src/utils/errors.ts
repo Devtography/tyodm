@@ -30,3 +30,21 @@ export class InvalidPropertyError extends Error {
     Object.setPrototypeOf(this, InvalidPropertyError.prototype);
   }
 }
+
+/**
+ * Error to indicate the value is not a number.
+ * @public
+ */
+export class NaNError extends Error {
+  constructor(value?: string) {
+    let msg: string | undefined;
+
+    if (value !== undefined) {
+      msg = `${value} is not a number`;
+    }
+
+    super(msg);
+
+    Object.setPrototypeOf(this, NaNError.prototype);
+  }
+}

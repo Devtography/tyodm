@@ -7,7 +7,7 @@ const colId2 = ulid();
 
 const obj = new MockObj();
 obj.meta = { objName: 'mock', objRank: 1 };
-obj.row1 = { subObj: { prop1: [1, 2] } };
+obj.row1 = { subObj: { prop1: ['1', '2'] } };
 obj.collection = new Map([
   [colId1, { collectionId: colId1, sampleIntArr: [1, 2] }],
   [colId2, { collectionId: colId2, sampleIntArr: [1, 2] }],

@@ -134,18 +134,18 @@ describe('function `mapper.assignValToObjProp`', () => {
         obj, 'prop');
     }).not.toThrow();
 
-    expect(obj.prop).toEqual(1023958.204836967123);
+    expect(obj.prop).toEqual('1023958.204836967123');
   });
 
   it('should assign a `decimal[]` to target property', () => {
     expect(() => {
       mapper.assignValToObjProp(
-        { L: [{ S: '1.1234567890' }, { S: '2.23456789' }, { S: '3.3456789' }] },
+        { L: [{ S: '1.123456789' }, { S: '2.23456789' }, { S: '3.3456789' }] },
         'decimal[]', obj, 'prop',
       );
     }).not.toThrow();
 
-    expect(obj.prop).toEqual([1.123456789, 2.23456789, 3.3456789]);
+    expect(obj.prop).toEqual(['1.123456789', '2.23456789', '3.3456789']);
   });
 
   it('should assign a `Set<decimal>` to target property', () => {
@@ -155,6 +155,9 @@ describe('function `mapper.assignValToObjProp`', () => {
         'decimal<>', obj, 'prop',
       );
     }).not.toThrow();
+
+    expect(obj.prop)
+      .toEqual(new Set(['1.123456789', '2.23456789', '3.3456789']));
   });
 
   it('should assign a `string` to target property', () => {
