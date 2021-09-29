@@ -3,6 +3,9 @@
  * custom error types by extending `Error`.
  */
 
+/**
+ * Error to indicate the function invoked has not been implemented yet.
+ */
 export class NotImplementedError extends Error {
   constructor(func?: string) {
     let msg = func;
