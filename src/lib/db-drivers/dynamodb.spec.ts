@@ -10,6 +10,7 @@ import {
 } from '@aws-sdk/client-dynamodb';
 import { ulid } from 'ulid';
 import { MockObj } from '../../test-utils/mock-object';
+import { NaNError } from '../../utils/errors';
 import * as connection from '../connection';
 import { TyODM } from '../odm';
 import { Schema } from '../schema';
@@ -63,7 +64,7 @@ describe('function `getObjByKey`', () => {
 
   beforeEach(async () => {
     obj.meta = { objName: 'mocker' };
-    obj.row1 = { subObj: { prop1: [1, 2, 3] } };
+    obj.row1 = { subObj: { prop1: ['1', '2', '3'] } };
     obj.collection = new Map([
       [ulid1, { collectionId: ulid1, sampleIntArr: [1, 3, 5, 7] }],
       [ulid2, { collectionId: ulid2, sampleIntArr: [2, 4, 6, 8] }],
@@ -88,7 +89,7 @@ describe('function `insertObj`', () => {
 
     const obj = new MockObj();
     obj.meta = { objName: 'mocker' };
-    obj.row1 = { subObj: { prop1: [1, 2, 3] } };
+    obj.row1 = { subObj: { prop1: ['1', '2', '3'] } };
     obj.collection = new Map([
       [ulid1, { collectionId: ulid1, sampleIntArr: [1, 3, 5, 7] }],
       [ulid2, { collectionId: ulid2, sampleIntArr: [2, 4, 6, 8] }],
@@ -191,7 +192,7 @@ describe('function `update`', () => {
         },
       },
     );
-    driver.update('MockObj#1', 'row1', { subObj: { prop1: [1, 2, 3] } },
+    driver.update('MockObj#1', 'row1', { subObj: { prop1: ['1', '2', '3'] } },
       MockObj.SCHEMA.props.row1);
     expect(driver.transactWriteItems).toHaveLength(2);
     expect(driver.transactWriteItems[1]).toEqual(
@@ -211,7 +212,7 @@ describe('function `update`', () => {
   it('should update the records in database as specified', async () => {
     const obj = new MockObj();
     obj.meta = { objName: 'mock' };
-    obj.row1 = { subObj: { prop1: [1, 2] } };
+    obj.row1 = { subObj: { prop1: ['1', '2'] } };
 
     driver.insertObj(obj);
     await driver.commitWriteTransaction();
@@ -275,16 +276,16 @@ describe('function `commitWriteTransaction`', () => {
   it('should write the data into DynamoDB', async () => {
     const obj1 = new MockObj();
     obj1.meta = { objName: 'obj1', objRank: 1 };
-    obj1.row1 = { subObj: { prop1: [-1.0387, 0.00001, 1.357] } };
+    obj1.row1 = { subObj: { prop1: ['-1.0387', '0.00001', '1.357'] } };
     obj1.sample = {
       sampleBool: true, sampleBoolArr: [true, true],
       sampleBoolSet: new Set([true, false]),
       sampleInt: 0, sampleIntArr: [-1, 0, 0], sampleIntSet: new Set([0, 1]),
       sampleDouble: 3.1417, sampleDoubleArr: [-3.33, 0.2, 0.2],
       sampleDoubleSet: new Set([-3.33, 1.11, 2.22]),
-      sampleDecimal: 0.0987654321,
-      sampleDecimalArr: [0.0987654321, 0.0987654321],
-      sampleDecimalSet: new Set([0.0987654321, 0.123456789]),
+      sampleDecimal: '0.0987654321',
+      sampleDecimalArr: ['0.0987654321', '0.0987654321'],
+      sampleDecimalSet: new Set(['0.0987654321', '0.123456789']),
       sampleStr: 'sample', sampleStrArr: ['a', 'a', 'b', 'b'],
       sampleStrSet: new Set(['a', 'b']),
       sampleOptional: 'optional',
@@ -387,7 +388,7 @@ describe('function `commitWriteTransaction`', () => {
   it('should throw `MaxWriteActionExceededError`', async () => {
     const obj = new MockObj();
     obj.meta = { objName: 'obj', objRank: 1 };
-    obj.row1 = { subObj: { prop1: [-1, 0, 1] } };
+    obj.row1 = { subObj: { prop1: ['-1', '0', '1'] } };
     obj.collection = new Map((() => {
       const result: Array<[
         string, { collectionId: string, sampleIntArr: number[] },
@@ -429,9 +430,9 @@ describe('function `buildPutTransactionWriteItem`', () => {
       sampleInt: 0, sampleIntArr: [-1, 0, 0], sampleIntSet: new Set([0, 1]),
       sampleDouble: 3.1417, sampleDoubleArr: [-3.33, 0.2, 0.2],
       sampleDoubleSet: new Set([-3.33, 1.11, 2.22]),
-      sampleDecimal: 0.0987654321,
-      sampleDecimalArr: [0.0987654321, 0.0987654321],
-      sampleDecimalSet: new Set([0.0987654321, 0.123456789]),
+      sampleDecimal: '0.0987654321',
+      sampleDecimalArr: ['0.0987654321', '0.0987654321'],
+      sampleDecimalSet: new Set(['0.0987654321', '0.123456789']),
       sampleStr: 'sample', sampleStrArr: ['a', 'a', 'b', 'b'],
       sampleStrSet: new Set(['a', 'b']),
       sampleOptional: 'optional',
@@ -475,7 +476,7 @@ describe('function `buildPutTransactionWriteItem`', () => {
 
   it('should return `TransactWriteItem` for object with sub-object', () => {
     const obj = new MockObj();
-    obj.row1 = { subObj: { prop1: [1, 2, 3, 4] } };
+    obj.row1 = { subObj: { prop1: ['1', '2', '3', '4'] } };
 
     const item = driver.buildPutTransactWriteItem(
       `${MockObj.name}#${obj.objectId}`, 'row1',
@@ -495,6 +496,44 @@ describe('function `buildPutTransactionWriteItem`', () => {
         },
         TableName: 'default',
       },
+    });
+  });
+
+  describe('`NaNError` for decimal type value is `NaN`', () => {
+    it('should throw `NaNError` for non-number value for `decimal`', () => {
+      const obj = new MockObj();
+      obj.nanTest = { nan: 'a', nanArr: [], nanSet: new Set() };
+
+      expect(() => {
+        driver.buildPutTransactWriteItem(
+          `${obj.objectSchema().name}#${obj.objectId}`, 'nanTest',
+          obj.nanTest ?? {}, obj.objectSchema().props.nanTest.attr,
+        );
+      }).toThrow(NaNError);
+    });
+
+    it('should throw `NaNError` for non-number value in `decimal[]`', () => {
+      const obj = new MockObj();
+      obj.nanTest = { nanArr: ['0', 'a'], nanSet: new Set() };
+
+      expect(() => {
+        driver.buildPutTransactWriteItem(
+          `${obj.objectSchema().name}#${obj.objectId}`, 'nanTest',
+          obj.nanTest ?? {}, obj.objectSchema().props.nanTest.attr,
+        );
+      }).toThrow(NaNError);
+    });
+
+    it('should throw `NaNError` for non-number value in `decimal<>`', () => {
+      const obj = new MockObj();
+      obj.nanTest = { nanArr: [], nanSet: new Set(['0', '0a']) };
+
+      expect(() => {
+        driver.buildPutTransactWriteItem(
+          `${obj.objectSchema().name}#${obj.objectId}`, 'nanTest',
+          obj.nanTest ?? {}, obj.objectSchema().props.nanTest.attr,
+        );
+      }).toThrow(NaNError);
     });
   });
 });

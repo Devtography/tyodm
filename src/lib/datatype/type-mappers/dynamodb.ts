@@ -54,9 +54,10 @@ function assignValToObjProp(
   val: AttributeValue, type: PropType,
   obj: Record<string, unknown>, key: string,
 ): void {
-  let propType: string = type.toLowerCase();
-
-  if (propType.slice(-1) === '?') { propType = propType.slice(0, -1); }
+  let propType = type.toLowerCase() as PropType;
+  if (propType.slice(-1) === '?') {
+    propType = propType.slice(0, -1) as PropType;
+  }
 
   const listTypes = ['bool<>', 'bool[]', 'int[]', 'double[]',
     'decimal[]', 'string[]'];
@@ -70,7 +71,9 @@ function assignValToObjProp(
   } else if (propType === 'int<>' || propType === 'double<>') {
     obj[key] = new Set(val.NS!.map(Number));
   } else if (propType === 'decimal') {
-    obj[key] = parseFloat(val.S!);
+    obj[key] = val.S;
+  } else if (propType === 'decimal<>') {
+    obj[key] = new Set(val.SS);
   } else if (propType === 'string') {
     obj[key] = val.S;
   } else if (propType === 'string<>') {
@@ -86,9 +89,7 @@ function assignValToObjProp(
         arr.push(parseInt(elm.N!, 10));
       } else if (propType === 'double[]') {
         arr.push(parseFloat(elm.N!));
-      } else if (propType === 'decimal[]') {
-        arr.push(parseFloat(elm.S!));
-      } else if (propType === 'string[]') {
+      } else if (propType === 'decimal[]' || propType === 'string[]') {
         arr.push(elm.S!);
       }
     });

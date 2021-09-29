@@ -3,6 +3,9 @@
  * custom error types by extending `Error`.
  */
 
+/**
+ * Error to indicate the function invoked has not been implemented yet.
+ */
 export class NotImplementedError extends Error {
   constructor(func?: string) {
     let msg = func;
@@ -28,5 +31,23 @@ export class InvalidPropertyError extends Error {
     super(message);
 
     Object.setPrototypeOf(this, InvalidPropertyError.prototype);
+  }
+}
+
+/**
+ * Error to indicate the value is not a number.
+ * @public
+ */
+export class NaNError extends Error {
+  constructor(value?: string) {
+    let msg: string | undefined;
+
+    if (value !== undefined) {
+      msg = `${value} is not a number`;
+    }
+
+    super(msg);
+
+    Object.setPrototypeOf(this, NaNError.prototype);
   }
 }

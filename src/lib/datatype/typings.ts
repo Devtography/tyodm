@@ -20,8 +20,8 @@ type ScalarType = 'bool' | 'int' | 'double' | 'decimal' | 'string';
  * as a rounded integer, meaning anything after the decimal will be truncated.
  * @param double - Property may be assigned any number, but will be stored as a
  * 64bit floating point, which may result in a loss of precision.
- * @param decimal - Property may be assigned any number, and will have no loss
- * of precision.
+ * @param decimal - Property may be assigned any number as string, and will
+ * have no loss of precision.
  * @param string - Property value may be any arbitrary string.
  */
 type PropType = `${ScalarType}${'?' | '[]' | '<>' | ''}`;

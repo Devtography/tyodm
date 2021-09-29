@@ -30,7 +30,7 @@ const colId2 = ulid();
 
 const commonObj = new MockObj(objId);
 commonObj.meta = { objName: 'mock', objRank: 1 };
-commonObj.row1 = { subObj: { prop1: [1, 2] } };
+commonObj.row1 = { subObj: { prop1: ['1', '2'] } };
 commonObj.collection = new Map([
   [colId1, { collectionId: colId1, sampleIntArr: [1, 2] }],
   [colId2, { collectionId: colId2, sampleIntArr: [1, 2] }],
@@ -214,7 +214,7 @@ describe('test with DynamoDB', () => {
 
   describe('function `write`', () => {
     const obj = new MockObj();
-    obj.row1 = { subObj: { prop1: [1, 2] } };
+    obj.row1 = { subObj: { prop1: ['1', '2'] } };
     obj.collection = new Map([
       [colId1, { collectionId: colId1, sampleIntArr: [1, 2] }],
       [colId2, { collectionId: colId2, sampleIntArr: [1, 2] }],
