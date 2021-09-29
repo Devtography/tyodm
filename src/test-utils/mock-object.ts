@@ -29,6 +29,10 @@ class MockObj extends Obj {
           sampleOptional: 'string?',
         },
       },
+      nanTest: {
+        type: 'single',
+        attr: { nan: 'decimal?', nanArr: 'decimal[]', nanSet: 'decimal<>' },
+      },
     },
   };
 
@@ -46,6 +50,7 @@ class MockObj extends Obj {
     sampleStr: string, sampleStrArr: string[], sampleStrSet: Set<string>,
     sampleOptional?: string,
   };
+  nanTest?: { nan?: string, nanArr: string[], nanSet: Set<string> };
 
   constructor(objId?: string) {
     super(objId);

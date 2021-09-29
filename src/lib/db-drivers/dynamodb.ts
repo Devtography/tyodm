@@ -7,7 +7,8 @@ import {
   TransactWriteItem,
   TransactWriteItemsCommand,
 } from '@aws-sdk/client-dynamodb';
-import { InvalidPropertyError } from '../../utils/errors';
+import isNumber from 'is-number';
+import { InvalidPropertyError, NaNError } from '../../utils/errors';
 import * as mapper from '../datatype/type-mappers/dynamodb';
 import { PropType } from '../datatype/typings';
 import { InvalidSchemaError, SchemaNotMatchError } from '../errors';
@@ -453,6 +454,10 @@ class DynamoDBDriver extends DBDriver {
 
     switch (datatype) {
       case ('S'):
+        if (propType === 'decimal' && !isNumber(elm)) {
+          throw new NaNError(elm as string);
+        }
+
         attrVal[datatype] = elm as string;
         break;
       case ('N'):
@@ -464,7 +469,11 @@ class DynamoDBDriver extends DBDriver {
       case ('SS'):
         if (propType === 'decimal<>') {
           attrVal[datatype] = Array.from(
-            elm as Set<number>, (val) => val.toString(),
+            elm as Set<string>, (val) => {
+              if (!isNumber(val)) { throw new NaNError(val); }
+
+              return val;
+            },
           );
         } else if (propType === 'string<>') {
           attrVal[datatype] = Array.from(elm as Set<string>);
@@ -486,8 +495,10 @@ class DynamoDBDriver extends DBDriver {
             arr.push({ N: val.toString() });
           });
         } else if (propType === 'decimal[]') {
-          (elm as number[]).forEach((val) => {
-            arr.push({ S: val.toString() });
+          (elm as string[]).forEach((val) => {
+            if (!isNumber(val)) { throw new NaNError(val); }
+
+            arr.push({ S: val });
           });
         } else if (propType === 'string[]') {
           (elm as string[]).forEach((val) => { arr.push({ S: val }); });

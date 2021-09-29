@@ -10,6 +10,7 @@ import {
 } from '@aws-sdk/client-dynamodb';
 import { ulid } from 'ulid';
 import { MockObj } from '../../test-utils/mock-object';
+import { NaNError } from '../../utils/errors';
 import * as connection from '../connection';
 import { TyODM } from '../odm';
 import { Schema } from '../schema';
@@ -495,6 +496,44 @@ describe('function `buildPutTransactionWriteItem`', () => {
         },
         TableName: 'default',
       },
+    });
+  });
+
+  describe('`NaNError` for decimal type value is `NaN`', () => {
+    it('should throw `NaNError` for non-number value for `decimal`', () => {
+      const obj = new MockObj();
+      obj.nanTest = { nan: 'a', nanArr: [], nanSet: new Set() };
+
+      expect(() => {
+        driver.buildPutTransactWriteItem(
+          `${obj.objectSchema().name}#${obj.objectId}`, 'nanTest',
+          obj.nanTest ?? {}, obj.objectSchema().props.nanTest.attr,
+        );
+      }).toThrow(NaNError);
+    });
+
+    it('should throw `NaNError` for non-number value in `decimal[]`', () => {
+      const obj = new MockObj();
+      obj.nanTest = { nanArr: ['0', 'a'], nanSet: new Set() };
+
+      expect(() => {
+        driver.buildPutTransactWriteItem(
+          `${obj.objectSchema().name}#${obj.objectId}`, 'nanTest',
+          obj.nanTest ?? {}, obj.objectSchema().props.nanTest.attr,
+        );
+      }).toThrow(NaNError);
+    });
+
+    it('should throw `NaNError` for non-number value in `decimal<>`', () => {
+      const obj = new MockObj();
+      obj.nanTest = { nanArr: [], nanSet: new Set(['0', '0a']) };
+
+      expect(() => {
+        driver.buildPutTransactWriteItem(
+          `${obj.objectSchema().name}#${obj.objectId}`, 'nanTest',
+          obj.nanTest ?? {}, obj.objectSchema().props.nanTest.attr,
+        );
+      }).toThrow(NaNError);
     });
   });
 });
