@@ -6,6 +6,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.1.0-rc.4] - 2021-09-30
+
+### Added
+- `NaNError` to indicate the value in concern is not a number.
+
+### Fixed
+- Issue of precision lost after 17 digits on value of `decimal` types variables
+  by mapping the data to JavaScript type `string` instead of `number`.
+  __*(Incompatible with older releases)*__
+- Issue of `decimal<>` type data not being handled when mapping to Amazon
+  DynamoDB data type.
+
 ## [0.1.0-rc.3] - 2021-09-29
 
 ### Added
@@ -65,7 +77,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 [README#Custom identifier & constructor]: https://github.com/Devtography/tyodm/blob/master/README.md#custom-identifier--constructor
 [README#Identifier]: https://github.com/Devtography/tyodm/blob/0.1.0-rc.2/README.md#identifier
 
-[Unreleased]: https://github.com/Devtography/tyodm/0.1.0-rc.3...HEAD
+[Unreleased]: https://github.com/Devtography/tyodm/0.1.0-rc.4...HEAD
+[0.1.0-rc.4]: https://github.com/Devtography/tyodm/releases/tag/0.1.0-rc.4
 [0.1.0-rc.3]: https://github.com/Devtography/tyodm/releases/tag/0.1.0-rc.3
 [0.1.0-rc.2]: https://github.com/Devtography/tyodm/releases/tag/0.1.0-rc.2
 [0.1.0-rc.1]: https://github.com/Devtography/tyodm/releases/tag/0.1.0-rc.1
