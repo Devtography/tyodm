@@ -34,15 +34,15 @@ class MockObj extends Obj {
 
   ulid: string;
   meta?: { objName: string, objRank?: number };
-  row1?: { subObj: { prop1: number[] } };
+  row1?: { subObj: { prop1: string[] } };
   collection?: Map<string, { collectionId: string, sampleIntArr: number[] }>;
   sample?: {
     sampleBool: boolean, sampleBoolArr: boolean[], sampleBoolSet: Set<boolean>,
     sampleInt: number, sampleIntArr: number[], sampleIntSet: Set<number>,
     sampleDouble: number, sampleDoubleArr: number[],
     sampleDoubleSet: Set<number>,
-    sampleDecimal: number, sampleDecimalArr: number[],
-    sampleDecimalSet: Set<number>,
+    sampleDecimal: string, sampleDecimalArr: string[],
+    sampleDecimalSet: Set<string>,
     sampleStr: string, sampleStrArr: string[], sampleStrSet: Set<string>,
     sampleOptional?: string,
   };

@@ -453,11 +453,7 @@ class DynamoDBDriver extends DBDriver {
 
     switch (datatype) {
       case ('S'):
-        if (propType === 'decimal') {
-          attrVal[datatype] = (elm as number).toString();
-        } else {
-          attrVal[datatype] = elm as string;
-        }
+        attrVal[datatype] = elm as string;
         break;
       case ('N'):
         attrVal[datatype] = (elm as number).toString();
