@@ -191,7 +191,7 @@ describe('function `update`', () => {
         },
       },
     );
-    driver.update('MockObj#1', 'row1', { subObj: { prop1: [1, 2, 3] } },
+    driver.update('MockObj#1', 'row1', { subObj: { prop1: ['1', '2', '3'] } },
       MockObj.SCHEMA.props.row1);
     expect(driver.transactWriteItems).toHaveLength(2);
     expect(driver.transactWriteItems[1]).toEqual(
